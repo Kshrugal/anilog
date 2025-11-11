@@ -2,7 +2,7 @@ AniLog: Your Personal Anime Tracker
 
 AniLog is a clean, modern, and fast web application for tracking your anime progress and sharing your lists with friends. Built with React and Firebase, it provides a seamless, real-time experience for all your anime tracking needs.
 
-View the live demo: [INSERT YOUR NETLIFY LINK HERE]
+View the live demo: https://anilogger.netlify.app/
 
 ✨ Core Features
 
