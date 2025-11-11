@@ -8,6 +8,9 @@ import {
   signOut,
   signInAnonymously,
   signInWithCustomToken,
+  // --- NEW: Import persistence functions ---
+  setPersistence,
+  browserLocalPersistence,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -28,8 +31,9 @@ import {
 import { setLogLevel } from "firebase/firestore";
 
 // --- Firebase Configuration ---
-// Using the config you provided.
-const firebaseConfig = {
+// Read keys from Vercel/Netlify Environment Variables
+// --- FIX: Fallback to hardcoded keys if 'process' is not defined (e.g., in CodeSandbox) ---
+const hardcodedConfig = {
   apiKey: "AIzaSyAmKlAsjEwciV_I1lIkv8fhHWZSAQtYMck",
   authDomain: "anilog-10335.firebaseapp.com",
   projectId: "anilog-10335",
@@ -39,8 +43,31 @@ const firebaseConfig = {
   measurementId: "G-S52EP9TP27",
 };
 
+const firebaseConfig = {
+  apiKey:
+    typeof process !== "undefined" && process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+      ? process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+      : hardcodedConfig.apiKey,
+  authDomain: hardcodedConfig.authDomain,
+  projectId: hardcodedConfig.projectId,
+  storageBucket: hardcodedConfig.storageBucket,
+  messagingSenderId: hardcodedConfig.messagingSenderId,
+  appId:
+    typeof process !== "undefined" && process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+      ? process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+      : hardcodedConfig.appId,
+  measurementId: hardcodedConfig.measurementId,
+};
+
 // Use your specific appId for database paths
-const appId = firebaseConfig.appId;
+// Fallback for local development if env var isn't set
+const appId =
+  typeof process !== "undefined" && process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+    ? process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+    : hardcodedConfig.appId;
+
+// --- App Name ---
+const APP_NAME = "AniLog"; // Change this to your new app name!
 
 // --- Initialize Firebase ---
 let app;
@@ -205,102 +232,114 @@ export default function App() {
   // --- Auth Initialization ---
   // Runs once on mount to check auth status
   useEffect(() => {
-    // Function to handle initial sign-in
-    const initializeAuth = async () => {
-      try {
-        // Try to sign in with the provided token first
-        if (
-          typeof __initial_auth_token !== "undefined" &&
-          __initial_auth_token
-        ) {
-          console.log("Attempting custom token sign-in...");
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          // Fallback to anonymous sign-in if no token is present
-          console.log("No custom token, attempting anonymous sign-in...");
-          await signInAnonymously(auth);
-        }
-      } catch (error) {
-        console.error("Initial sign-in error:", error);
-        // If token sign-in fails, force anonymous sign-in
-        if (
-          error.code === "auth/custom-token-mismatch" ||
-          error.code === "auth/invalid-custom-token"
-        ) {
-          console.warn("Custom token sign-in failed, signing in anonymously.");
+    // --- NEW: Set persistence before doing anything else ---
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        // Persistence set, now initialize auth
+        const initializeAuth = async () => {
           try {
-            await signInAnonymously(auth);
-          } catch (anonError) {
-            console.error("Anonymous sign-in fallback failed:", anonError);
+            // Try to sign in with the provided token first
+            if (
+              typeof __initial_auth_token !== "undefined" &&
+              __initial_auth_token
+            ) {
+              console.log("Attempting custom token sign-in...");
+              await signInWithCustomToken(auth, __initial_auth_token);
+            } else if (!auth.currentUser) {
+              // Fallback to anonymous sign-in if no token and no current user
+              console.log(
+                "No custom token or user, attempting anonymous sign-in..."
+              );
+              await signInAnonymously(auth);
+            }
+          } catch (error) {
+            console.error("Initial sign-in error:", error);
+            // If token sign-in fails, force anonymous sign-in
+            if (
+              error.code === "auth/custom-token-mismatch" ||
+              error.code === "auth/invalid-custom-token"
+            ) {
+              console.warn(
+                "Custom token sign-in failed, signing in anonymously."
+              );
+              try {
+                await signInAnonymously(auth);
+              } catch (anonError) {
+                console.error("Anonymous sign-in fallback failed:", anonError);
+              }
+            }
           }
-        }
-      }
-    };
+        };
 
-    // Set up the listener *before* trying to sign in
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setLoading(true);
-      if (user) {
-        console.log("Auth state changed, user found:", user.uid);
-        setCurrentUser(user);
-        setUserId(user.uid);
+        // Set up the listener *before* trying to sign in
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          setLoading(true);
+          if (user) {
+            console.log("Auth state changed, user found:", user.uid);
+            setCurrentUser(user);
+            setUserId(user.uid);
 
-        // Fetch user profile (username)
-        try {
-          const userDocRef = doc(
-            db,
-            `artifacts/${appId}/public/data/users/${user.uid}`
-          );
-          const userDocSnap = await getDoc(userDocRef);
+            // Fetch user profile (username)
+            try {
+              const userDocRef = doc(
+                db,
+                `artifacts/${appId}/public/data/users/${user.uid}`
+              );
+              const userDocSnap = await getDoc(userDocRef);
 
-          if (userDocSnap.exists()) {
-            // User doc exists, just read the username
-            const userData = userDocSnap.data();
-            setUsername(
-              userData.username ||
-                (user.email ? user.email.split("@")[0] : "Guest")
-            );
-          } else if (!user.isAnonymous) {
-            // *** THIS IS THE FIX ***
-            // If doc doesn't exist and user is NOT anonymous, create it.
-            console.log("No user profile doc, creating one...");
-            const newUsername = user.email.split("@")[0]; // Default username from email
-            await setDoc(userDocRef, {
-              uid: user.uid,
-              email: user.email,
-              username: newUsername,
-              createdAt: serverTimestamp(),
-              friends: [], // Initialize empty friends list
-            });
-            setUsername(newUsername); // Set the newly created username
+              if (userDocSnap.exists()) {
+                // User doc exists, just read the username
+                const userData = userDocSnap.data();
+                setUsername(
+                  userData.username ||
+                    (user.email ? user.email.split("@")[0] : "Guest")
+                );
+              } else if (!user.isAnonymous) {
+                // *** THIS IS THE FIX ***
+                // If doc doesn't exist and user is NOT anonymous, create it.
+                console.log("No user profile doc, creating one...");
+                const newUsername = user.email.split("@")[0]; // Default username from email
+                await setDoc(userDocRef, {
+                  uid: user.uid,
+                  email: user.email,
+                  username: newUsername,
+                  createdAt: serverTimestamp(),
+                  friends: [], // Initialize empty friends list
+                });
+                setUsername(newUsername); // Set the newly created username
+              } else {
+                // User is anonymous and has no doc
+                console.log("User is anonymous, setting username to Guest.");
+                setUsername("Guest");
+              }
+            } catch (error) {
+              console.error("Error fetching/creating user profile:", error);
+              setUsername(user.email ? user.email.split("@")[0] : "Guest");
+            }
           } else {
-            // User is anonymous and has no doc
-            console.log("User is anonymous, setting username to Guest.");
-            setUsername("Guest");
+            console.log("Auth state changed, no user.");
+            setCurrentUser(null);
+            setUserId(null);
+            setUsername("");
           }
-        } catch (error) {
-          console.error("Error fetching/creating user profile:", error);
-          setUsername(user.email ? user.email.split("@")[0] : "Guest");
+          setLoading(false);
+        });
+
+        // Run the initialization if there's no user
+        if (!auth.currentUser) {
+          initializeAuth();
         }
-      } else {
-        console.log("Auth state changed, no user.");
-        setCurrentUser(null);
-        setUserId(null);
-        setUsername("");
-      }
-      setLoading(false);
-    });
 
-    // Run the initialization
-    if (!auth.currentUser) {
-      initializeAuth();
-    }
-
-    // Cleanup listener on unmount
-    return () => {
-      console.log("Cleaning up auth listener.");
-      unsubscribe();
-    };
+        // Cleanup listener on unmount
+        return () => {
+          console.log("Cleaning up auth listener.");
+          unsubscribe();
+        };
+      })
+      .catch((error) => {
+        console.error("Error setting persistence:", error);
+        setLoading(false);
+      });
   }, []); // Empty dependency array ensures this runs only once
 
   const handleLogout = async () => {
@@ -318,7 +357,7 @@ export default function App() {
   if (loading || !db) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-        Loading AniLog...
+        Loading {APP_NAME}...
       </div>
     );
   }
@@ -357,7 +396,7 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-gray-800 shadow-md">
         <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">AniLog</h1>
+          <h1 className="text-2xl font-bold text-white">{APP_NAME}</h1>
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setPage("profile")}
@@ -502,7 +541,7 @@ function AuthPage({ db, setPage }) {
     <div className="flex items-center justify-center min-h-screen bg-gray-900">
       <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-xl shadow-lg slide-up">
         <h1 className="text-3xl font-bold text-center text-white">
-          Welcome to AniLog
+          Welcome to {APP_NAME}
         </h1>
 
         <form onSubmit={handleAuthAction} className="space-y-4">
@@ -564,6 +603,11 @@ function HomePage({ db, userId, username }) {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("watching");
 
+  // --- NEW: State for modal ---
+  const [selectedAnimeKitsuId, setSelectedAnimeKitsuId] = useState(null);
+  const [selectedAnimeData, setSelectedAnimeData] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
+
   const statusTabs = ["watching", "completed", "planned", "dropped"];
 
   // Listen for changes to the user's list
@@ -596,10 +640,42 @@ function HomePage({ db, userId, username }) {
     return () => unsubscribe();
   }, [db, userId]); // Only re-run if db or userId changes
 
+  // --- NEW: Fetch full anime details when a card is clicked ---
+  useEffect(() => {
+    if (!selectedAnimeKitsuId) return;
+
+    const fetchAnimeDetails = async () => {
+      setModalLoading(true);
+      try {
+        const response = await fetch(
+          `${KITSU_API_URL}/anime/${selectedAnimeKitsuId}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch anime details from Kitsu.");
+        }
+        const data = await response.json();
+        setSelectedAnimeData(data.data); // Kitsu API nests result in 'data'
+      } catch (err) {
+        console.error("Error fetching Kitsu details:", err);
+        // Can't open modal if fetch fails
+        setSelectedAnimeKitsuId(null);
+        setSelectedAnimeData(null);
+      }
+      setModalLoading(false);
+    };
+
+    fetchAnimeDetails();
+  }, [selectedAnimeKitsuId]);
+
   const filteredList = useMemo(
     () => myList.filter((item) => item.status === statusFilter),
     [myList, statusFilter]
   );
+
+  const handleCloseModal = () => {
+    setSelectedAnimeKitsuId(null);
+    setSelectedAnimeData(null);
+  };
 
   return (
     <div className="flex flex-col space-y-4">
@@ -632,6 +708,11 @@ function HomePage({ db, userId, username }) {
           <p className="text-gray-400 col-span-full">Loading list...</p>
         )}
         {error && <p className="text-red-400 col-span-full">{error}</p>}
+        {modalLoading && (
+          <p className="text-gray-400 col-span-full">
+            Loading anime details...
+          </p>
+        )}
 
         {!loading && !error && filteredList.length === 0 && (
           <p className="text-gray-400 col-span-full mt-4">
@@ -643,9 +724,24 @@ function HomePage({ db, userId, username }) {
         {!loading &&
           !error &&
           filteredList.map((anime) => (
-            <AnimeCard key={anime.id} anime={anime} />
+            <AnimeCard
+              key={anime.id}
+              anime={anime}
+              // --- NEW: Add click handler ---
+              onCardClick={() => setSelectedAnimeKitsuId(anime.kitsuId)}
+            />
           ))}
       </div>
+
+      {/* --- NEW: Render modal from Home Page --- */}
+      {selectedAnimeData && (
+        <AnimeDetailsModal
+          anime={selectedAnimeData}
+          onClose={handleCloseModal}
+          db={db}
+          userId={userId}
+        />
+      )}
     </div>
   );
 }
@@ -656,7 +752,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // --- NEW: Import State ---
+  // --- Import State ---
   const [importFile, setImportFile] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importMessage, setImportMessage] = useState("");
@@ -712,7 +808,6 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
   // --- NEW: MAL Status Mapper ---
   const mapMalStatus = (malStatus) => {
     // MAL Statuses from XML: "Watching", "Completed", "On-Hold", "Dropped", "Plan to Watch"
-    // This is the corrected version.
     switch (malStatus) {
       case "Watching":
         return "watching";
@@ -763,7 +858,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
         // This is the fix: read my_status *text* content
         const malStatus = node.getElementsByTagName("my_status")[0].textContent;
 
-        // --- NEW: Import score and progress ---
+        // --- Import score and progress ---
         const malScore = parseInt(
           node.getElementsByTagName("my_score")[0].textContent,
           10
@@ -809,7 +904,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
             title: attr.canonicalTitle,
             imageUrl: attr.posterImage?.small || null,
             status: appStatus,
-            // --- NEW: Add score and progress ---
+            // --- Add score and progress ---
             score: malScore > 0 ? malScore : 0, // 0 for 'No Score'
             watchedEpisodes: malWatchedEpisodes || 0,
             totalEpisodes: attr.episodeCount || 0, // Store total for progress bar
@@ -911,7 +1006,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
         </button>
       </form>
 
-      {/* --- NEW: MAL Import Section --- */}
+      {/* --- MAL Import Section --- */}
       <div className="mt-8 pt-6 border-t border-gray-700">
         <h3 className="text-xl font-semibold mb-4 text-white">
           Import from MyAnimeList
@@ -1075,6 +1170,11 @@ function FriendsPage({ db, userId, username }) {
   const [friendList, setFriendList] = useState([]);
   const [loadingFriendList, setLoadingFriendList] = useState(false);
 
+  // --- NEW: State for modal on home page ---
+  const [selectedAnimeKitsuId, setSelectedAnimeKitsuId] = useState(null);
+  const [selectedAnimeData, setSelectedAnimeData] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
+
   const userDocRef = doc(db, `artifacts/${appId}/public/data/users/${userId}`);
   const usersCollectionRef = collection(
     db,
@@ -1105,6 +1205,38 @@ function FriendsPage({ db, userId, username }) {
 
     return () => unsubscribe();
   }, [db, userId]); // Rerun if db or userId changes
+
+  // --- NEW: Fetch full anime details when a friend's anime card is clicked ---
+  useEffect(() => {
+    if (!selectedAnimeKitsuId) return;
+
+    const fetchAnimeDetails = async () => {
+      setModalLoading(true);
+      try {
+        const response = await fetch(
+          `${KITSU_API_URL}/anime/${selectedAnimeKitsuId}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch anime details from Kitsu.");
+        }
+        const data = await response.json();
+        setSelectedAnimeData(data.data); // Kitsu API nests result in 'data'
+      } catch (err) {
+        console.error("Error fetching Kitsu details:", err);
+        // Can't open modal if fetch fails
+        setSelectedAnimeKitsuId(null);
+        setSelectedAnimeData(null);
+      }
+      setModalLoading(false);
+    };
+
+    fetchAnimeDetails();
+  }, [selectedAnimeKitsuId]);
+
+  const handleCloseModal = () => {
+    setSelectedAnimeKitsuId(null);
+    setSelectedAnimeData(null);
+  };
 
   // --- Search for Friends ---
   const handleFriendSearch = async (e) => {
@@ -1228,16 +1360,33 @@ function FriendsPage({ db, userId, username }) {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {friendList.map((anime) => (
-                    // --- NEW: Pass 'isFriendList' to hide score/progress on friend's card ---
+                    // --- Pass 'isFriendList' to hide score/progress on friend's card ---
                     <AnimeCard
                       key={anime.id}
                       anime={anime}
                       isFriendList={true}
+                      // --- NEW: Allow clicking on friend's anime ---
+                      onCardClick={() => setSelectedAnimeKitsuId(anime.kitsuId)}
                     />
                   ))}
                 </div>
               )}
             </div>
+          )}
+
+          {/* --- NEW: Modal for viewing friend's anime details --- */}
+          {modalLoading && (
+            <div className="absolute inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
+              <p className="text-white">Loading anime details...</p>
+            </div>
+          )}
+          {selectedAnimeData && (
+            <AnimeDetailsModal
+              anime={selectedAnimeData}
+              onClose={handleCloseModal}
+              db={db}
+              userId={userId} // Pass *your* userId so you can add it to *your* list
+            />
           )}
         </div>
       </div>
@@ -1342,7 +1491,7 @@ function AnimeCard({ anime, onCardClick, isFriendList = false }) {
   const title = isKitsu ? anime.canonicalTitle : anime.title;
   const imageUrl = isKitsu ? anime.posterImage?.small : anime.imageUrl;
 
-  // --- NEW: Get score and progress ---
+  // --- Get score and progress ---
   const score = anime.score || 0;
   const watched = anime.watchedEpisodes || 0;
   const total = anime.totalEpisodes || 0;
@@ -1368,7 +1517,7 @@ function AnimeCard({ anime, onCardClick, isFriendList = false }) {
       }`}
       onClick={onCardClick}
     >
-      {/* --- NEW: Score Badge --- */}
+      {/* --- Score Badge --- */}
       {!isKitsu && !isFriendList && score > 0 && (
         <div className="absolute top-2 right-2 z-10 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
           {score}/10
@@ -1390,7 +1539,7 @@ function AnimeCard({ anime, onCardClick, isFriendList = false }) {
         </h3>
       </div>
 
-      {/* --- NEW: Progress Bar --- */}
+      {/* --- Progress Bar --- */}
       {!isKitsu && !isFriendList && progressPercent > 0 && (
         <div className="w-full bg-gray-700 h-1">
           <div
@@ -1405,7 +1554,7 @@ function AnimeCard({ anime, onCardClick, isFriendList = false }) {
 
 function AnimeDetailsModal({ anime, onClose, db, userId }) {
   const [loading, setLoading] = useState(true);
-  // --- NEW: Store list item in state ---
+  // --- Store list item in state ---
   const [listItem, setListItem] = useState(null);
 
   // Kitsu API data is nested in 'attributes'
@@ -1417,7 +1566,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
     `https://placehold.co/500x700/2D3748/E2E8F0?text=${encodeURIComponent(
       title
     )}`;
-  // --- NEW: Get total episodes from Kitsu ---
+  // --- Get total episodes from Kitsu ---
   const totalEpisodes = attr.episodeCount || 0; // 0 if unknown
 
   // Find anime ID in my list (Kitsu ID is a string, so we compare strings)
@@ -1430,7 +1579,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
     return doc(collection(db, listCollectionPath), animeKitsuId);
   }, [db, userId, animeKitsuId]);
 
-  // --- NEW: Use onSnapshot to get real-time data ---
+  // --- Use onSnapshot to get real-time data ---
   useEffect(() => {
     if (!animeDocRef) return;
 
@@ -1454,31 +1603,49 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
     return () => unsubscribe();
   }, [animeDocRef]);
 
-  // --- NEW: Debounced Update Function ---
+  // --- Debounced Update Function ---
   // This custom hook will delay state updates to Firestore
   const useDebouncedSave = (value, saveFunction) => {
     useEffect(() => {
-      const timer = setTimeout(() => {
+      // Don't save on initial load
+      const handler = setTimeout(() => {
         saveFunction(value);
       }, 1000); // 1 second delay after user stops typing/changing
 
-      return () => clearTimeout(timer);
+      return () => clearTimeout(handler);
     }, [value, saveFunction]);
   };
 
-  // --- NEW: Local state for inputs ---
+  // Custom hook version that skips initial render
+  const useDebouncedSaveAfterMount = (value, saveFunction) => {
+    const isMounted = React.useRef(false);
+
+    useEffect(() => {
+      if (isMounted.current) {
+        const handler = setTimeout(() => {
+          saveFunction(value);
+        }, 1000); // 1-second delay
+
+        return () => clearTimeout(handler);
+      } else {
+        isMounted.current = true;
+      }
+    }, [value, saveFunction]);
+  };
+
+  // --- Local state for inputs ---
   const [localScore, setLocalScore] = useState(listItem?.score || 0);
   const [localEpisodes, setLocalEpisodes] = useState(
     listItem?.watchedEpisodes || 0
   );
 
-  // Update local state if the Firestore data changes
+  // Update local state if the Firestore data changes (e.g., on load)
   useEffect(() => {
     setLocalScore(listItem?.score || 0);
     setLocalEpisodes(listItem?.watchedEpisodes || 0);
   }, [listItem]);
 
-  // --- NEW: Save functions for debouncing ---
+  // --- Save functions for debouncing ---
   const saveScore = useCallback(
     (newScore) => {
       if (!animeDocRef || newScore === listItem?.score) return;
@@ -1491,17 +1658,22 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
 
   const saveProgress = useCallback(
     (newProgress) => {
-      if (!animeDocRef || newProgress === listItem?.watchedEpisodes) return;
-      updateDoc(animeDocRef, { watchedEpisodes: newProgress }).catch((err) =>
-        console.error("Failed to save progress:", err)
+      if (
+        !animeDocRef ||
+        newProgress === listItem?.watchedEpisodes ||
+        newProgress === "" // Don't save if input is empty
+      )
+        return;
+      updateDoc(animeDocRef, { watchedEpisodes: Number(newProgress) }).catch(
+        (err) => console.error("Failed to save progress:", err)
       );
     },
     [animeDocRef, listItem?.watchedEpisodes]
   );
 
   // Apply debouncing
-  useDebouncedSave(localScore, saveScore);
-  useDebouncedSave(localEpisodes, saveProgress);
+  useDebouncedSaveAfterMount(localScore, saveScore);
+  useDebouncedSaveAfterMount(localEpisodes, saveProgress);
 
   // --- Add/Update/Remove from List ---
   const addToList = async (status) => {
@@ -1517,8 +1689,8 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
 
     try {
       // Use setDoc to create or overwrite
-      await setDoc(animeDocRef, animeData);
-      // No need to update local state, onSnapshot will handle it
+      await setDoc(animeDocRef, animeData, { merge: true });
+      // onSnapshot will handle the local state update
     } catch (err) {
       console.error("Error adding to list:", err);
     }
@@ -1582,7 +1754,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
             ))}
           </div>
 
-          {/* --- NEW: Score and Progress Section --- */}
+          {/* --- Score and Progress Section --- */}
           {listItem && !loading && (
             <div className="pt-4 border-t border-gray-700 space-y-4">
               <div className="flex items-center justify-between">
@@ -1620,8 +1792,15 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
                     type="number"
                     value={localEpisodes}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      if (val >= 0) setLocalEpisodes(val);
+                      const val = e.target.value;
+                      if (val === "") {
+                        setLocalEpisodes(""); // Allow empty input
+                      } else {
+                        const num = parseInt(val, 10);
+                        if (num >= 0) {
+                          setLocalEpisodes(num);
+                        }
+                      }
                     }}
                     className="w-20 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-right"
                     min="0"
