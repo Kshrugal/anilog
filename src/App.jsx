@@ -35,6 +35,8 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { setLogLevel } from "firebase/firestore";
+// --- NEW: Import Framer Motion ---
+import { motion, AnimatePresence } from "framer-motion";
 
 // --- Firebase Configuration ---
 // Read keys from Vercel/Netlify Environment Variables
@@ -126,7 +128,6 @@ const HomeIcon = () => (
   </svg>
 );
 
-// --- NEW: Discover Icon ---
 const DiscoverIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -230,7 +231,6 @@ const PlusIcon = () => (
   </svg>
 );
 
-// --- NEW: Play Icon (for Trailer) ---
 const PlayIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -267,8 +267,14 @@ export default function App() {
         from { transform: translateY(30px); opacity: 0; }
         to { transform: translateY(0px); opacity: 1; }
       }
+      /* --- NEW: Skeleton Pulse --- */
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
       .fade-in { animation: fade-in 0.3s ease-out forwards; }
       .slide-up { animation: slide-up 0.3s ease-out forwards; }
+      .animate-pulse-fast { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
       /* Hide number input arrows */
       input[type=number]::-webkit-inner-spin-button, 
@@ -421,6 +427,28 @@ export default function App() {
     return <AuthPage db={db} setPage={setPage} />;
   }
 
+  // --- NEW: Page Transition Variants ---
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+      y: 20,
+    },
+    in: {
+      opacity: 1,
+      y: 0,
+    },
+    out: {
+      opacity: 0,
+      y: -20,
+    },
+  };
+
+  const pageTransition = {
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.3,
+  };
+
   // --- Main App Navigation ---
   const renderPage = () => {
     switch (page) {
@@ -428,7 +456,6 @@ export default function App() {
         return <HomePage db={db} userId={userId} username={username} />;
       case "search":
         return <SearchPage db={db} userId={userId} />;
-      // --- NEW: Add Discover Page ---
       case "discover":
         return <DiscoverPage db={db} userId={userId} />;
       case "friends":
@@ -475,8 +502,21 @@ export default function App() {
         </nav>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-grow container mx-auto p-4">{renderPage()}</main>
+      {/* Main Content --- NEW: Added Page Transitions --- */}
+      <main className="flex-grow container mx-auto p-4">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={page}
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            {renderPage()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
       {/* Bottom Navigation */}
       <footer className="sticky bottom-0 z-10 bg-gray-900/70 backdrop-blur-md shadow-inner border-t border-gray-700/50">
@@ -499,7 +539,6 @@ export default function App() {
             <SearchIcon />
             <span className="text-xs">Search</span>
           </button>
-          {/* --- NEW: Discover Button --- */}
           <button
             onClick={() => setPage("discover")}
             className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
@@ -769,11 +808,14 @@ function HomePage({ db, userId, username }) {
         ))}
       </div>
 
-      {/* Anime List Display */}
+      {/* --- NEW: Skeleton Loading for Home Page --- */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {loading && (
-          <p className="text-gray-400 col-span-full">Loading list...</p>
-        )}
+        {loading &&
+          // Render 10 skeleton cards
+          Array.from({ length: 10 }).map((_, index) => (
+            <AnimeCardSkeleton key={index} />
+          ))}
+
         {error && <p className="text-red-400 col-span-full">{error}</p>}
         {modalLoading && (
           <p className="text-gray-400 col-span-full">
@@ -813,7 +855,7 @@ function HomePage({ db, userId, username }) {
   );
 }
 
-// --- NEW: Discover Page Component ---
+// --- Discover Page Component ---
 function DiscoverPage({ db, userId }) {
   const [topAiring, setTopAiring] = useState([]);
   const [topUpcoming, setTopUpcoming] = useState([]);
@@ -830,9 +872,6 @@ function DiscoverPage({ db, userId }) {
     const fetchLists = async () => {
       setLoading(true);
       setError(null);
-      let airingFailed = false;
-      let upcomingFailed = false;
-      let popularFailed = false;
 
       // Helper to fetch one list
       const fetchList = async (url, setter) => {
@@ -878,14 +917,6 @@ function DiscoverPage({ db, userId }) {
     setSelectedAnime(null);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center">
-        <p className="text-gray-400">Loading discover lists...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col space-y-8">
       <h2 className="text-2xl font-semibold">Discover Anime</h2>
@@ -894,26 +925,32 @@ function DiscoverPage({ db, userId }) {
         <p className="text-gray-400">Loading anime details...</p>
       )}
 
-      {/* Top Airing Carousel */}
-      <AnimeCarousel
-        title="Top Airing"
-        animeList={topAiring}
-        onAnimeClick={setSelectedAnime}
-      />
-
-      {/* Most Popular Carousel */}
-      <AnimeCarousel
-        title="Most Popular All Time"
-        animeList={mostPopular}
-        onAnimeClick={setSelectedAnime}
-      />
-
-      {/* Top Upcoming Carousel */}
-      <AnimeCarousel
-        title="Top Upcoming"
-        animeList={topUpcoming}
-        onAnimeClick={setSelectedAnime}
-      />
+      {/* --- NEW: Skeletons for Discover Page --- */}
+      {loading ? (
+        <>
+          <AnimeCarouselSkeleton title="Top Airing" />
+          <AnimeCarouselSkeleton title="Most Popular All Time" />
+          <AnimeCarouselSkeleton title="Top Upcoming" />
+        </>
+      ) : (
+        <>
+          <AnimeCarousel
+            title="Top Airing"
+            animeList={topAiring}
+            onAnimeClick={setSelectedAnime}
+          />
+          <AnimeCarousel
+            title="Most Popular All Time"
+            animeList={mostPopular}
+            onAnimeClick={setSelectedAnime}
+          />
+          <AnimeCarousel
+            title="Top Upcoming"
+            animeList={topUpcoming}
+            onAnimeClick={setSelectedAnime}
+          />
+        </>
+      )}
 
       {/* Render modal from Discover Page */}
       {selectedAnime && (
@@ -928,7 +965,7 @@ function DiscoverPage({ db, userId }) {
   );
 }
 
-// --- NEW: Reusable Carousel Component ---
+// --- Reusable Carousel Component ---
 function AnimeCarousel({ title, animeList, onAnimeClick }) {
   if (!animeList || animeList.length === 0) return null;
 
@@ -942,6 +979,33 @@ function AnimeCarousel({ title, animeList, onAnimeClick }) {
               anime={anime.attributes}
               onCardClick={() => onAnimeClick(anime)}
             />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// --- NEW: Reusable Skeleton Loader Components ---
+function AnimeCardSkeleton() {
+  return (
+    <div className="relative bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-lg overflow-hidden flex flex-col animate-pulse-fast">
+      <div className="w-full aspect-[2/3] bg-gray-700/50"></div>
+      <div className="p-3">
+        <div className="h-4 bg-gray-700/50 rounded w-3/4"></div>
+      </div>
+    </div>
+  );
+}
+
+function AnimeCarouselSkeleton({ title }) {
+  return (
+    <section>
+      <h3 className="text-xl font-semibold mb-3 h-6 bg-gray-700/50 rounded w-1/3 animate-pulse-fast"></h3>
+      <div className="flex overflow-x-auto gap-4 pb-4 -mb-4">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="w-40 flex-shrink-0">
+            <AnimeCardSkeleton />
           </div>
         ))}
       </div>
@@ -1154,7 +1218,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-lg slide-up">
+    <div className="max-w-lg mx-auto p-6 bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-lg">
       <h2 className="text-2xl font-semibold mb-6 text-white">My Profile</h2>
 
       <div className="space-y-4 mb-6">
@@ -1332,10 +1396,12 @@ function SearchPage({ db, userId }) {
 
       {error && <p className="text-red-400 text-center">{error}</p>}
 
+      {/* --- NEW: Skeleton Loading for Search --- */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {loading && (
-          <p className="text-gray-400 col-span-full">Loading results...</p>
-        )}
+        {loading &&
+          Array.from({ length: 10 }).map((_, index) => (
+            <AnimeCardSkeleton key={index} />
+          ))}
 
         {!loading &&
           results.map((anime) => (
@@ -1369,7 +1435,7 @@ function FriendsPage({ db, userId, username }) {
   const [error, setError] = useState("");
   const [searchError, setSearchError] = useState("");
 
-  // --- NEW: State for the large friend modal ---
+  // State for the large friend modal
   const [viewingFriend, setViewingFriend] = useState(null); // { uid, username }
 
   const userDocRef = doc(db, `artifacts/${appId}/public/data/users/${userId}`);
@@ -1545,7 +1611,7 @@ function FriendsPage({ db, userId, username }) {
         )}
       </div>
 
-      {/* --- NEW: Render Friend's List Modal --- */}
+      {/* --- Render Friend's List Modal --- */}
       {viewingFriend && (
         <FriendListModal
           friend={viewingFriend}
@@ -1558,7 +1624,7 @@ function FriendsPage({ db, userId, username }) {
   );
 }
 
-// --- NEW: Friend List Modal Component ---
+// --- Friend List Modal Component ---
 function FriendListModal({ friend, onClose, db, userId }) {
   const [friendList, setFriendList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1712,8 +1778,13 @@ function FriendListModal({ friend, onClose, db, userId }) {
 
         {/* Friend's List Grid */}
         <div className="flex-grow overflow-y-auto">
+          {/* --- NEW: Skeleton Loading for Friend Modal --- */}
           {loading ? (
-            <p className="text-gray-400">Loading {friend.username}'s list...</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <AnimeCardSkeleton key={index} />
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {filteredList.length === 0 ? (
@@ -2085,6 +2156,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
             )}
           </div>
 
+          {/* THIS IS THE BUGGED LINE */}
           <p className="text-sm text-gray-300 max-h-32 overflow-y-auto">
             {attr.synopsis || "No synopsis available."}
           </p>
