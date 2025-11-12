@@ -93,11 +93,11 @@ const SearchIcon = () => (
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
+    strokeWidth={2}
   >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={2}
       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
     />
   </svg>
@@ -110,11 +110,11 @@ const HomeIcon = () => (
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
+    strokeWidth={2}
   >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={2}
       d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2a1 1 0 01-1-1v-4z"
     />
   </svg>
@@ -127,12 +127,35 @@ const FriendsIcon = () => (
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
+    strokeWidth={2}
   >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={2}
       d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+    />
+  </svg>
+);
+
+// --- NEW: Discover Icon ---
+const DiscoverIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
     />
   </svg>
 );
@@ -144,11 +167,11 @@ const LogoutIcon = () => (
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
+    strokeWidth={2}
   >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={2}
       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
     />
   </svg>
@@ -178,11 +201,11 @@ const CloseIcon = () => (
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
+    strokeWidth={2}
   >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={2}
       d="M6 18L18 6M6 6l12 12"
     />
   </svg>
@@ -198,6 +221,22 @@ const PlusIcon = () => (
     strokeWidth={2}
   >
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+  </svg>
+);
+
+// --- NEW: Play/Trailer Icon ---
+const PlayIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 mr-2"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
@@ -224,6 +263,36 @@ export default function App() {
       }
       .fade-in { animation: fade-in 0.3s ease-out forwards; }
       .slide-up { animation: slide-up 0.3s ease-out forwards; }
+      
+      /* --- Hide number input arrows --- */
+      /* For Chrome, Safari, Edge, Opera */
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      /* For Firefox */
+      input[type=number] {
+        -moz-appearance: textfield;
+      }
+
+      /* --- 3D Card Hover Style --- */
+      .anime-card {
+        transition: transform 0.3s ease-out;
+        transform-style: preserve-3d;
+      }
+      .anime-card .anime-card-light {
+        transition: opacity 0.3s ease-out;
+        opacity: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at var(--light-x) var(--light-y), rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 50%);
+      }
+      .anime-card:hover {
+        /* Handled by JS */
+      }
+      .anime-card:hover .anime-card-light {
+        opacity: 1;
+      }
     `;
     document.head.appendChild(style);
     return () => document.head.removeChild(style);
@@ -356,7 +425,7 @@ export default function App() {
 
   if (loading || !db) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+      <div className="flex items-center justify-center min-h-screen bg-black text-white">
         Loading {APP_NAME}...
       </div>
     );
@@ -374,6 +443,9 @@ export default function App() {
         return <HomePage db={db} userId={userId} username={username} />;
       case "search":
         return <SearchPage db={db} userId={userId} />;
+      // --- Add Discover Page ---
+      case "discover":
+        return <DiscoverPage db={db} userId={userId} />;
       case "friends":
         return <FriendsPage db={db} userId={userId} username={username} />;
       case "profile":
@@ -392,9 +464,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 font-sans flex flex-col">
+    <div className="min-h-screen bg-black text-gray-100 font-sans flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gray-800 shadow-md">
+      <header className="sticky top-0 z-10 bg-gray-900/70 backdrop-blur-md shadow-lg border-b border-gray-700/50">
         <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">{APP_NAME}</h1>
           <div className="flex items-center space-x-4">
@@ -402,15 +474,15 @@ export default function App() {
               onClick={() => setPage("profile")}
               title="Profile"
               className={`p-2 rounded-full ${
-                page === "profile" ? "text-blue-400" : "text-gray-400"
-              } hover:text-white hover:bg-gray-700 transition-colors`}
+                page === "profile" ? "text-white" : "text-gray-400"
+              } hover:text-white hover:bg-gray-700/50 transition-colors`}
             >
               <ProfileIcon />
             </button>
             <button
               onClick={handleLogout}
               title="Logout"
-              className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
             >
               <LogoutIcon />
             </button>
@@ -422,12 +494,12 @@ export default function App() {
       <main className="flex-grow container mx-auto p-4">{renderPage()}</main>
 
       {/* Bottom Navigation */}
-      <footer className="sticky bottom-0 z-10 bg-gray-800 shadow-inner">
+      <footer className="sticky bottom-0 z-10 bg-gray-900/70 backdrop-blur-md shadow-inner border-t border-gray-700/50">
         <nav className="container mx-auto px-4 py-3 flex justify-around">
           <button
             onClick={() => setPage("home")}
             className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-              page === "home" ? "text-blue-400" : "text-gray-400"
+              page === "home" ? "text-white" : "text-gray-400"
             } hover:text-white`}
           >
             <HomeIcon />
@@ -436,16 +508,26 @@ export default function App() {
           <button
             onClick={() => setPage("search")}
             className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-              page === "search" ? "text-blue-400" : "text-gray-400"
+              page === "search" ? "text-white" : "text-gray-400"
             } hover:text-white`}
           >
             <SearchIcon />
             <span className="text-xs">Search</span>
           </button>
+          {/* --- Add Discover Button --- */}
+          <button
+            onClick={() => setPage("discover")}
+            className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+              page === "discover" ? "text-white" : "text-gray-400"
+            } hover:text-white`}
+          >
+            <DiscoverIcon />
+            <span className="text-xs">Discover</span>
+          </button>
           <button
             onClick={() => setPage("friends")}
             className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-              page === "friends" ? "text-blue-400" : "text-gray-400"
+              page === "friends" ? "text-white" : "text-gray-400"
             } hover:text-white`}
           >
             <FriendsIcon />
@@ -538,8 +620,8 @@ function AuthPage({ db, setPage }) {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
-      <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-xl shadow-lg slide-up">
+    <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="w-full max-w-md p-8 space-y-6 bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-xl shadow-lg slide-up">
         <h1 className="text-3xl font-bold text-center text-white">
           Welcome to {APP_NAME}
         </h1>
@@ -552,7 +634,7 @@ function AuthPage({ db, setPage }) {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Username"
               required
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           )}
           <input
@@ -561,7 +643,7 @@ function AuthPage({ db, setPage }) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             required
-            className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           <input
             type="password"
@@ -569,14 +651,14 @@ function AuthPage({ db, setPage }) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             required
-            className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
 
           {error && <p className="text-sm text-red-400 text-center">{error}</p>}
 
           <button
             type="submit"
-            className="w-full px-4 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+            className="w-full px-4 py-3 font-semibold text-black bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors"
           >
             {isLogin ? "Log In" : "Sign Up"}
           </button>
@@ -587,7 +669,7 @@ function AuthPage({ db, setPage }) {
             setIsLogin(!isLogin);
             setError("");
           }}
-          className="w-full text-sm text-center text-blue-400 hover:underline"
+          className="w-full text-sm text-center text-gray-400 hover:underline"
         >
           {isLogin ? "Need an account? Sign Up" : "Have an account? Log In"}
         </button>
@@ -603,7 +685,7 @@ function HomePage({ db, userId, username }) {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("watching");
 
-  // --- NEW: State for modal ---
+  // --- State for modal ---
   const [selectedAnimeKitsuId, setSelectedAnimeKitsuId] = useState(null);
   const [selectedAnimeData, setSelectedAnimeData] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
@@ -640,7 +722,7 @@ function HomePage({ db, userId, username }) {
     return () => unsubscribe();
   }, [db, userId]); // Only re-run if db or userId changes
 
-  // --- NEW: Fetch full anime details when a card is clicked ---
+  // --- Fetch full anime details when a card is clicked ---
   useEffect(() => {
     if (!selectedAnimeKitsuId) return;
 
@@ -686,15 +768,15 @@ function HomePage({ db, userId, username }) {
       </p>
 
       {/* Status Filter Tabs */}
-      <div className="flex space-x-2 border-b border-gray-700">
+      <div className="flex flex-wrap gap-2">
         {statusTabs.map((status) => (
           <button
             key={status}
             onClick={() => setStatusFilter(status)}
-            className={`px-4 py-2 capitalize font-medium transition-colors ${
+            className={`px-4 py-2 capitalize font-medium rounded-full text-sm transition-colors ${
               statusFilter === status
-                ? "border-b-2 border-blue-400 text-white"
-                : "text-gray-400 hover:text-gray-200"
+                ? "bg-gray-200 text-black"
+                : "bg-gray-900/70 text-gray-300 hover:bg-gray-700/70 backdrop-blur-md border border-gray-700/50"
             }`}
           >
             {status}
@@ -716,8 +798,8 @@ function HomePage({ db, userId, username }) {
 
         {!loading && !error && filteredList.length === 0 && (
           <p className="text-gray-400 col-span-full mt-4">
-            Your "{statusFilter}" list is empty. Go to the "Search" tab to find
-            and add anime!
+            Your "{statusFilter}" list is empty. Go to the "Discover" tab to
+            find and add anime!
           </p>
         )}
 
@@ -727,16 +809,139 @@ function HomePage({ db, userId, username }) {
             <AnimeCard
               key={anime.id}
               anime={anime}
-              // --- NEW: Add click handler ---
+              // --- Add click handler ---
               onCardClick={() => setSelectedAnimeKitsuId(anime.kitsuId)}
             />
           ))}
       </div>
 
-      {/* --- NEW: Render modal from Home Page --- */}
+      {/* --- Render modal from Home Page --- */}
       {selectedAnimeData && (
         <AnimeDetailsModal
           anime={selectedAnimeData}
+          onClose={handleCloseModal}
+          db={db}
+          userId={userId}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- NEW: Discover Page Component ---
+function DiscoverPage({ db, userId }) {
+  const [topAiring, setTopAiring] = useState([]);
+  const [topUpcoming, setTopUpcoming] = useState([]);
+  const [topPopular, setTopPopular] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // --- State for modal ---
+  const [selectedAnime, setSelectedAnime] = useState(null);
+
+  useEffect(() => {
+    // --- ROBUST FETCHING: Fetch lists independently ---
+    const fetchLists = async () => {
+      setLoading(true);
+      setError(null);
+      let hadError = false;
+
+      // --- 1. Fetch Top Airing ---
+      try {
+        const airingRes = await fetch(
+          `${KITSU_API_URL}/anime?filter[status]=current&sort=-user_count&page[limit]=10`
+        );
+        if (!airingRes.ok) throw new Error("Airing list failed");
+        const airingData = await airingRes.json();
+        setTopAiring(airingData.data);
+      } catch (err) {
+        console.error("Error fetching airing:", err);
+        hadError = true;
+      }
+
+      // --- 2. Fetch Top Upcoming ---
+      try {
+        const upcomingRes = await fetch(
+          `${KITSU_API_URL}/anime?filter[status]=upcoming&sort=-user_count&page[limit]=10`
+        );
+        if (!upcomingRes.ok) throw new Error("Upcoming list failed");
+        const upcomingData = await upcomingRes.json();
+        setTopUpcoming(upcomingData.data);
+      } catch (err) {
+        console.error("Error fetching upcoming:", err);
+        hadError = true;
+      }
+
+      // --- 3. Fetch Top Popular ---
+      try {
+        const popularRes = await fetch(
+          `${KITSU_API_URL}/anime?sort=-user_count&page[limit]=10`
+        );
+        if (!popularRes.ok) throw new Error("Popular list failed");
+        const popularData = await popularRes.json();
+        setTopPopular(popularData.data);
+      } catch (err) {
+        console.error("Error fetching popular:", err);
+        hadError = true;
+      }
+
+      if (hadError) {
+        setError("Could not load all discover lists. Please try again later.");
+      }
+      setLoading(false);
+    };
+
+    fetchLists();
+  }, []);
+
+  const handleCloseModal = () => {
+    setSelectedAnime(null);
+  };
+
+  // --- Reusable Carousel Component ---
+  const AnimeCarousel = ({ title, list, isLoading }) => (
+    <div className="space-y-3">
+      <h3 className="text-xl font-semibold text-white">{title}</h3>
+      <div className="flex space-x-4 overflow-x-auto py-2">
+        {isLoading ? (
+          <p className="text-gray-400">Loading list...</p>
+        ) : list.length === 0 ? (
+          <p className="text-gray-500">Could not load this list.</p>
+        ) : (
+          list.map((anime) => (
+            <div key={anime.id} className="w-40 flex-shrink-0">
+              <AnimeCard
+                anime={anime.attributes}
+                onCardClick={() => setSelectedAnime(anime)}
+              />
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col space-y-6">
+      <h2 className="text-2xl font-semibold">Discover Anime</h2>
+      {error && <p className="text-red-400 text-center text-sm">{error}</p>}
+
+      <AnimeCarousel title="Top Airing" list={topAiring} isLoading={loading} />
+      <AnimeCarousel
+        title="Most Popular All Time"
+        list={topPopular}
+        isLoading={loading}
+      />
+      <AnimeCarousel
+        title="Top Upcoming"
+        list={topUpcoming}
+        isLoading={loading}
+      />
+
+      {/* --- Render modal --- */}
+      {selectedAnime && (
+        <AnimeDetailsModal
+          anime={selectedAnime}
           onClose={handleCloseModal}
           db={db}
           userId={userId}
@@ -805,7 +1010,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
     setLoading(false);
   };
 
-  // --- NEW: MAL Status Mapper ---
+  // --- MAL Status Mapper ---
   const mapMalStatus = (malStatus) => {
     // MAL Statuses from XML: "Watching", "Completed", "On-Hold", "Dropped", "Plan to Watch"
     switch (malStatus) {
@@ -824,7 +1029,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
     }
   };
 
-  // --- NEW: MAL Import Handler ---
+  // --- MAL Import Handler ---
   const handleMalImport = async () => {
     if (!importFile) {
       setImportMessage("Please select your MAL export file first.");
@@ -951,7 +1156,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-4 bg-gray-800 rounded-lg shadow-lg slide-up">
+    <div className="max-w-lg mx-auto p-6 bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-lg slide-up">
       <h2 className="text-2xl font-semibold mb-6 text-white">My Profile</h2>
 
       <div className="space-y-4 mb-6">
@@ -961,7 +1166,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
         </p>
         <p className="text-gray-400">
           <span className="font-medium text-gray-300">User ID:</span>
-          <span className="text-xs break-all ml-2 p-1 bg-gray-700 rounded font-mono">
+          <span className="text-xs break-all ml-2 p-1 bg-gray-800 rounded font-mono">
             {userId}
           </span>
         </p>
@@ -980,7 +1185,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
             type="text"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           <p className="text-xs text-gray-400 mt-1">
             This is the name your friends will see and use to find you.
@@ -1000,14 +1205,14 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
         <button
           type="submit"
           disabled={loading || newUsername.trim() === username}
-          className="w-full px-4 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"
+          className="w-full px-4 py-3 font-semibold text-black bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
         >
           {loading ? "Updating..." : "Update Username"}
         </button>
       </form>
 
       {/* --- MAL Import Section --- */}
-      <div className="mt-8 pt-6 border-t border-gray-700">
+      <div className="mt-8 pt-6 border-t border-gray-700/50">
         <h3 className="text-xl font-semibold mb-4 text-white">
           Import from MyAnimeList
         </h3>
@@ -1024,13 +1229,13 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
               file:mr-4 file:py-2 file:px-4
               file:rounded-full file:border-0
               file:text-sm file:font-semibold
-              file:bg-blue-600 file:text-white
-              hover:file:bg-blue-700"
+              file:bg-gray-700 file:text-white
+              hover:file:bg-gray-600"
           />
           <button
             onClick={handleMalImport}
             disabled={importLoading || !importFile}
-            className="w-full px-4 py-3 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 font-semibold text-black bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
           >
             {importLoading ? "Importing..." : "Start Import"}
           </button>
@@ -1120,7 +1325,7 @@ function SearchPage({ db, userId }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for an anime..."
-          className="w-full px-4 py-3 pl-10 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 pl-10 bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
         />
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
           <SearchIcon />
@@ -1170,7 +1375,7 @@ function FriendsPage({ db, userId, username }) {
   const [friendList, setFriendList] = useState([]);
   const [loadingFriendList, setLoadingFriendList] = useState(false);
 
-  // --- NEW: State for modal on home page ---
+  // --- State for modal on home page ---
   const [selectedAnimeKitsuId, setSelectedAnimeKitsuId] = useState(null);
   const [selectedAnimeData, setSelectedAnimeData] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
@@ -1206,7 +1411,7 @@ function FriendsPage({ db, userId, username }) {
     return () => unsubscribe();
   }, [db, userId]); // Rerun if db or userId changes
 
-  // --- NEW: Fetch full anime details when a friend's anime card is clicked ---
+  // --- Fetch full anime details when a friend's anime card is clicked ---
   useEffect(() => {
     if (!selectedAnimeKitsuId) return;
 
@@ -1340,10 +1545,10 @@ function FriendsPage({ db, userId, username }) {
   if (viewingFriend) {
     return (
       <div className="fixed inset-0 z-20 bg-black bg-opacity-75 flex items-center justify-center p-4 fade-in">
-        <div className="relative w-full max-w-2xl max-h-[80vh] bg-gray-800 rounded-lg shadow-xl p-6 slide-up">
+        <div className="relative w-full max-w-3xl max-h-[80vh] bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-xl p-6 slide-up">
           <button
             onClick={() => setViewingFriend(null)}
-            className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white"
+            className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white"
           >
             <CloseIcon />
           </button>
@@ -1358,14 +1563,14 @@ function FriendsPage({ db, userId, username }) {
               {friendList.length === 0 ? (
                 <p>{viewingFriend.username} hasn't added any anime yet.</p>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {friendList.map((anime) => (
                     // --- Pass 'isFriendList' to hide score/progress on friend's card ---
                     <AnimeCard
                       key={anime.id}
                       anime={anime}
                       isFriendList={true}
-                      // --- NEW: Allow clicking on friend's anime ---
+                      // --- Allow clicking on friend's anime ---
                       onCardClick={() => setSelectedAnimeKitsuId(anime.kitsuId)}
                     />
                   ))}
@@ -1374,9 +1579,9 @@ function FriendsPage({ db, userId, username }) {
             </div>
           )}
 
-          {/* --- NEW: Modal for viewing friend's anime details --- */}
+          {/* --- Modal for viewing friend's anime details --- */}
           {modalLoading && (
-            <div className="absolute inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
+            <div className="absolute inset-0 bg-gray-900/70 backdrop-blur-md flex items-center justify-center">
               <p className="text-white">Loading anime details...</p>
             </div>
           )}
@@ -1405,12 +1610,12 @@ function FriendsPage({ db, userId, username }) {
             value={friendSearch}
             onChange={(e) => setFriendSearch(e.target.value)}
             placeholder="Search by exact username..."
-            className="flex-grow px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-grow px-4 py-3 bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           <button
             type="submit"
             disabled={searchLoading}
-            className="flex-shrink-0 px-4 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-500"
+            className="flex-shrink-0 px-4 py-3 font-semibold text-black bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-600"
           >
             <SearchIcon />
           </button>
@@ -1446,14 +1651,14 @@ function FriendsPage({ db, userId, username }) {
               myFriends.map((friend) => (
                 <div
                   key={friend.uid}
-                  className="flex items-center justify-between p-4 bg-gray-800 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg"
                 >
                   <span className="font-medium text-white">
                     {friend.username}
                   </span>
                   <button
                     onClick={() => viewFriendList(friend)}
-                    className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                    className="px-3 py-1 text-sm font-medium text-black bg-gray-200 rounded-md hover:bg-white transition-colors"
                   >
                     View List
                   </button>
@@ -1471,11 +1676,11 @@ function FriendsPage({ db, userId, username }) {
 
 function UserCard({ user, onAdd }) {
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg shadow">
+    <div className="flex items-center justify-between p-3 bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow">
       <span className="font-medium text-white">{user.username}</span>
       <button
         onClick={() => onAdd(user)}
-        className="flex items-center justify-center p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+        className="flex items-center justify-center p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600 transition-colors"
         title={`Add ${user.username} as a friend`}
       >
         <PlusIcon />
@@ -1484,6 +1689,7 @@ function UserCard({ user, onAdd }) {
   );
 }
 
+// --- 3D Tilt Card Component ---
 function AnimeCard({ anime, onCardClick, isFriendList = false }) {
   // Check if anime data is from Kitsu (search) or Firestore (list)
   const isKitsu = !!anime.canonicalTitle;
@@ -1506,20 +1712,51 @@ function AnimeCard({ anime, onCardClick, isFriendList = false }) {
   }
 
   // Fallback image
-  const placeholderImg = `https://placehold.co/500x700/2D3748/E2E8F0?text=${encodeURIComponent(
+  const placeholderImg = `https://placehold.co/500x700/1F2937/E5E7EB?text=${encodeURIComponent(
     title
   )}`;
 
+  // --- 3D Tilt & Light Effect ---
+  const cardRef = React.useRef(null);
+
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const { left, top, width, height } =
+      cardRef.current.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
+
+    // Calculate rotation
+    const rotateX = ((y - height / 2) / (height / 2)) * -5; // Max 5deg tilt
+    const rotateY = ((x - width / 2) / (width / 2)) * 5; // Max 5deg tilt
+
+    // Calculate light position
+    const lightX = (x / width) * 100;
+    const lightY = (y / height) * 100;
+
+    cardRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+    cardRef.current.style.setProperty("--light-x", `${lightX}%`);
+    cardRef.current.style.setProperty("--light-y", `${lightY}%`);
+  };
+
+  const handleMouseLeave = () => {
+    if (!cardRef.current) return;
+    cardRef.current.style.transform =
+      "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
+  };
+
   return (
     <div
-      className={`relative bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col ${
-        onCardClick ? "cursor-pointer" : ""
-      }`}
+      ref={cardRef}
+      className={`anime-card relative bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-lg overflow-hidden flex flex-col
+        ${onCardClick ? "cursor-pointer" : ""}`}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       onClick={onCardClick}
     >
       {/* --- Score Badge --- */}
       {!isKitsu && !isFriendList && score > 0 && (
-        <div className="absolute top-2 right-2 z-10 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+        <div className="absolute top-2 right-2 z-10 bg-gray-200 text-black text-xs font-bold px-2 py-1 rounded-full shadow-md">
           {score}/10
         </div>
       )}
@@ -1531,9 +1768,9 @@ function AnimeCard({ anime, onCardClick, isFriendList = false }) {
           e.target.onerror = null;
           e.target.src = placeholderImg;
         }}
-        className="w-full h-48 sm:h-64 object-cover"
+        className="w-full h-48 sm:h-64 object-cover pointer-events-none"
       />
-      <div className="p-3 flex-grow">
+      <div className="p-3 flex-grow pointer-events-none">
         <h3 className="font-semibold text-sm text-white truncate" title={title}>
           {title}
         </h3>
@@ -1541,13 +1778,22 @@ function AnimeCard({ anime, onCardClick, isFriendList = false }) {
 
       {/* --- Progress Bar --- */}
       {!isKitsu && !isFriendList && progressPercent > 0 && (
-        <div className="w-full bg-gray-700 h-1">
+        <div className="w-full bg-gray-700/50 h-1 pointer-events-none">
           <div
             className="bg-green-500 h-1"
             style={{ width: `${progressPercent}%` }}
           ></div>
         </div>
       )}
+
+      {/* --- Light Effect --- */}
+      <div
+        className="anime-card-light absolute inset-0"
+        style={{
+          "--light-x": "50%",
+          "--light-y": "50%",
+        }}
+      ></div>
     </div>
   );
 }
@@ -1563,7 +1809,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
   const title = attr.canonicalTitle;
   const imageUrl =
     attr.posterImage?.medium ||
-    `https://placehold.co/500x700/2D3748/E2E8F0?text=${encodeURIComponent(
+    `https://placehold.co/500x700/1F2937/E5E7EB?text=${encodeURIComponent(
       title
     )}`;
   // --- Get total episodes from Kitsu ---
@@ -1602,19 +1848,6 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
 
     return () => unsubscribe();
   }, [animeDocRef]);
-
-  // --- Debounced Update Function ---
-  // This custom hook will delay state updates to Firestore
-  const useDebouncedSave = (value, saveFunction) => {
-    useEffect(() => {
-      // Don't save on initial load
-      const handler = setTimeout(() => {
-        saveFunction(value);
-      }, 1000); // 1 second delay after user stops typing/changing
-
-      return () => clearTimeout(handler);
-    }, [value, saveFunction]);
-  };
 
   // Custom hook version that skips initial render
   const useDebouncedSaveAfterMount = (value, saveFunction) => {
@@ -1708,18 +1941,24 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
 
   const statusOptions = ["watching", "completed", "planned", "dropped"];
 
+  // --- Helper function to format start date ---
+  const getYear = (dateString) => {
+    if (!dateString) return null;
+    return new Date(dateString).getFullYear();
+  };
+
   return (
     <div
       className="fixed inset-0 z-20 bg-black bg-opacity-75 flex items-center justify-center p-4 fade-in"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-lg max-h-[90vh] bg-gray-800 rounded-lg shadow-xl overflow-y-auto slide-up"
+        className="relative w-full max-w-lg max-h-[90vh] bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-xl overflow-y-auto slide-up"
         onClick={(e) => e.stopPropagation()} // Prevent click from closing modal
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white z-10"
+          className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white z-10"
         >
           <CloseIcon />
         </button>
@@ -1727,11 +1966,42 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
         <img
           src={imageUrl}
           alt={title}
-          className="w-full h-64 object-cover object-top"
+          className="w-full h-48 md:h-64 object-cover object-top"
         />
 
         <div className="p-6 space-y-4">
           <h2 className="text-2xl font-bold text-white">{title}</h2>
+
+          {/* --- Info Tags --- */}
+          <div className="flex flex-wrap gap-2">
+            <span className="px-3 py-1 bg-gray-700/70 text-gray-200 text-xs font-medium rounded-full">
+              {attr.status === "current"
+                ? "Airing"
+                : attr.status.charAt(0).toUpperCase() + attr.status.slice(1)}
+            </span>
+            {getYear(attr.startDate) && (
+              <span className="px-3 py-1 bg-gray-700/70 text-gray-200 text-xs font-medium rounded-full">
+                {getYear(attr.startDate)}
+              </span>
+            )}
+            {attr.ageRating && (
+              <span className="px-3 py-1 bg-gray-700/70 text-gray-200 text-xs font-medium rounded-full">
+                {attr.ageRating}
+              </span>
+            )}
+            {/* --- Trailer Button --- */}
+            {attr.youtubeVideoId && (
+              <a
+                href={`https://www.youtube.com/watch?v=${attr.youtubeVideoId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center px-3 py-1 bg-red-600/70 text-white text-xs font-medium rounded-full hover:bg-red-500/70"
+              >
+                <PlayIcon />
+                Watch Trailer
+              </a>
+            )}
+          </div>
 
           <p className="text-sm text-gray-300 max-h-32 overflow-y-auto">
             {attr.synopsis || "No synopsis available."}
@@ -1745,7 +2015,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
                 disabled={loading}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   listItem?.status === status
-                    ? "bg-blue-600 text-white"
+                    ? "bg-gray-200 text-black"
                     : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                 } disabled:opacity-50`}
               >
@@ -1756,7 +2026,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
 
           {/* --- Score and Progress Section --- */}
           {listItem && !loading && (
-            <div className="pt-4 border-t border-gray-700 space-y-4">
+            <div className="pt-4 border-t border-gray-700/50 space-y-4">
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="score"
@@ -1768,7 +2038,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
                   id="score"
                   value={localScore}
                   onChange={(e) => setLocalScore(parseInt(e.target.value, 10))}
-                  className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="px-3 py-2 bg-gray-800/70 border border-gray-700 rounded-lg text-white"
                 >
                   <option value="0">N/A</option>
                   {[...Array(10)].map((_, i) => (
@@ -1802,7 +2072,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
                         }
                       }
                     }}
-                    className="w-20 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-right"
+                    className="w-20 px-3 py-2 bg-gray-800/70 border border-gray-700 rounded-lg text-white text-right"
                     min="0"
                     max={totalEpisodes > 0 ? totalEpisodes : undefined}
                   />
@@ -1818,7 +2088,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
             <button
               onClick={removeFromList}
               disabled={loading}
-              className="w-full px-4 py-2 font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              className="w-full px-4 py-2 font-semibold text-white bg-red-600/70 rounded-lg hover:bg-red-500/70 transition-colors disabled:opacity-50"
             >
               Remove from List
             </button>
