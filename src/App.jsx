@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -8,7 +14,7 @@ import {
   signOut,
   signInAnonymously,
   signInWithCustomToken,
-  // --- NEW: Import persistence functions ---
+  // Import persistence functions
   setPersistence,
   browserLocalPersistence,
 } from "firebase/auth";
@@ -32,7 +38,7 @@ import { setLogLevel } from "firebase/firestore";
 
 // --- Firebase Configuration ---
 // Read keys from Vercel/Netlify Environment Variables
-// --- FIX: Fallback to hardcoded keys if 'process' is not defined (e.g., in CodeSandbox) ---
+// Fallback to hardcoded keys if 'process' is not defined (e.g., in CodeSandbox)
 const hardcodedConfig = {
   apiKey: "AIzaSyAmKlAsjEwciV_I1lIkv8fhHWZSAQtYMck",
   authDomain: "anilog-10335.firebaseapp.com",
@@ -93,11 +99,11 @@ const SearchIcon = () => (
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
-    strokeWidth={2}
   >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth={2}
       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
     />
   </svg>
@@ -110,29 +116,12 @@ const HomeIcon = () => (
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
-    strokeWidth={2}
   >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth={2}
       d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2a1 1 0 01-1-1v-4z"
-    />
-  </svg>
-);
-
-const FriendsIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-5 w-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={2}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
     />
   </svg>
 );
@@ -160,6 +149,23 @@ const DiscoverIcon = () => (
   </svg>
 );
 
+const FriendsIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+    />
+  </svg>
+);
+
 const LogoutIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -167,11 +173,11 @@ const LogoutIcon = () => (
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
-    strokeWidth={2}
   >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth={2}
       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
     />
   </svg>
@@ -201,11 +207,11 @@ const CloseIcon = () => (
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
-    strokeWidth={2}
   >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth={2}
       d="M6 18L18 6M6 6l12 12"
     />
   </svg>
@@ -224,7 +230,7 @@ const PlusIcon = () => (
   </svg>
 );
 
-// --- NEW: Play/Trailer Icon ---
+// --- NEW: Play Icon (for Trailer) ---
 const PlayIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -246,10 +252,10 @@ export default function App() {
   const [userId, setUserId] = useState(null);
   const [username, setUsername] = useState(""); // State for public username
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState("home"); // home, search, friends, profile
+  const [page, setPage] = useState("home"); // home, search, discover, friends, profile
 
   // --- Animation Styles ---
-  // Inject custom animation keyframes into the document head
+  // Inject custom animation keyframes and input styles into the document head
   useEffect(() => {
     const style = document.createElement("style");
     style.innerHTML = `
@@ -263,35 +269,15 @@ export default function App() {
       }
       .fade-in { animation: fade-in 0.3s ease-out forwards; }
       .slide-up { animation: slide-up 0.3s ease-out forwards; }
-      
-      /* --- Hide number input arrows --- */
-      /* For Chrome, Safari, Edge, Opera */
-      input::-webkit-outer-spin-button,
-      input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
+
+      /* Hide number input arrows */
+      input[type=number]::-webkit-inner-spin-button, 
+      input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
       }
-      /* For Firefox */
       input[type=number] {
         -moz-appearance: textfield;
-      }
-
-      /* --- 3D Card Hover Style --- */
-      .anime-card {
-        transition: transform 0.3s ease-out;
-        transform-style: preserve-3d;
-      }
-      .anime-card .anime-card-light {
-        transition: opacity 0.3s ease-out;
-        opacity: 0;
-        pointer-events: none;
-        background: radial-gradient(circle at var(--light-x) var(--light-y), rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 50%);
-      }
-      .anime-card:hover {
-        /* Handled by JS */
-      }
-      .anime-card:hover .anime-card-light {
-        opacity: 1;
       }
     `;
     document.head.appendChild(style);
@@ -301,7 +287,7 @@ export default function App() {
   // --- Auth Initialization ---
   // Runs once on mount to check auth status
   useEffect(() => {
-    // --- NEW: Set persistence before doing anything else ---
+    // Set persistence before doing anything else
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
         // Persistence set, now initialize auth
@@ -364,7 +350,6 @@ export default function App() {
                     (user.email ? user.email.split("@")[0] : "Guest")
                 );
               } else if (!user.isAnonymous) {
-                // *** THIS IS THE FIX ***
                 // If doc doesn't exist and user is NOT anonymous, create it.
                 console.log("No user profile doc, creating one...");
                 const newUsername = user.email.split("@")[0]; // Default username from email
@@ -443,7 +428,7 @@ export default function App() {
         return <HomePage db={db} userId={userId} username={username} />;
       case "search":
         return <SearchPage db={db} userId={userId} />;
-      // --- Add Discover Page ---
+      // --- NEW: Add Discover Page ---
       case "discover":
         return <DiscoverPage db={db} userId={userId} />;
       case "friends":
@@ -469,7 +454,7 @@ export default function App() {
       <header className="sticky top-0 z-10 bg-gray-900/70 backdrop-blur-md shadow-lg border-b border-gray-700/50">
         <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">{APP_NAME}</h1>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => setPage("profile")}
               title="Profile"
@@ -514,7 +499,7 @@ export default function App() {
             <SearchIcon />
             <span className="text-xs">Search</span>
           </button>
-          {/* --- Add Discover Button --- */}
+          {/* --- NEW: Discover Button --- */}
           <button
             onClick={() => setPage("discover")}
             className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
@@ -634,7 +619,7 @@ function AuthPage({ db, setPage }) {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Username"
               required
-              className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           )}
           <input
@@ -643,7 +628,7 @@ function AuthPage({ db, setPage }) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             required
-            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           <input
             type="password"
@@ -651,14 +636,14 @@ function AuthPage({ db, setPage }) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             required
-            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
 
           {error && <p className="text-sm text-red-400 text-center">{error}</p>}
 
           <button
             type="submit"
-            className="w-full px-4 py-3 font-semibold text-black bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors"
+            className="w-full px-4 py-3 font-semibold text-gray-900 bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors"
           >
             {isLogin ? "Log In" : "Sign Up"}
           </button>
@@ -685,7 +670,7 @@ function HomePage({ db, userId, username }) {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("watching");
 
-  // --- State for modal ---
+  // State for modal
   const [selectedAnimeKitsuId, setSelectedAnimeKitsuId] = useState(null);
   const [selectedAnimeData, setSelectedAnimeData] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
@@ -722,7 +707,7 @@ function HomePage({ db, userId, username }) {
     return () => unsubscribe();
   }, [db, userId]); // Only re-run if db or userId changes
 
-  // --- Fetch full anime details when a card is clicked ---
+  // Fetch full anime details when a card is clicked
   useEffect(() => {
     if (!selectedAnimeKitsuId) return;
 
@@ -775,8 +760,8 @@ function HomePage({ db, userId, username }) {
             onClick={() => setStatusFilter(status)}
             className={`px-4 py-2 capitalize font-medium rounded-full text-sm transition-colors ${
               statusFilter === status
-                ? "bg-gray-200 text-black"
-                : "bg-gray-900/70 text-gray-300 hover:bg-gray-700/70 backdrop-blur-md border border-gray-700/50"
+                ? "bg-gray-200 text-gray-900"
+                : "bg-gray-900/70 text-gray-300 hover:bg-gray-700/70 border border-gray-700/50"
             }`}
           >
             {status}
@@ -809,13 +794,13 @@ function HomePage({ db, userId, username }) {
             <AnimeCard
               key={anime.id}
               anime={anime}
-              // --- Add click handler ---
+              // Add click handler
               onCardClick={() => setSelectedAnimeKitsuId(anime.kitsuId)}
             />
           ))}
       </div>
 
-      {/* --- Render modal from Home Page --- */}
+      {/* Render modal from Home Page */}
       {selectedAnimeData && (
         <AnimeDetailsModal
           anime={selectedAnimeData}
@@ -832,60 +817,55 @@ function HomePage({ db, userId, username }) {
 function DiscoverPage({ db, userId }) {
   const [topAiring, setTopAiring] = useState([]);
   const [topUpcoming, setTopUpcoming] = useState([]);
-  const [topPopular, setTopPopular] = useState([]);
+  const [mostPopular, setMostPopular] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- State for modal ---
+  // State for modal
   const [selectedAnime, setSelectedAnime] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
+  // Fetch all discover lists
   useEffect(() => {
-    // --- ROBUST FETCHING: Fetch lists independently ---
     const fetchLists = async () => {
       setLoading(true);
       setError(null);
-      let hadError = false;
+      let airingFailed = false;
+      let upcomingFailed = false;
+      let popularFailed = false;
 
-      // --- 1. Fetch Top Airing ---
-      try {
-        const airingRes = await fetch(
-          `${KITSU_API_URL}/anime?filter[status]=current&sort=-user_count&page[limit]=10`
-        );
-        if (!airingRes.ok) throw new Error("Airing list failed");
-        const airingData = await airingRes.json();
-        setTopAiring(airingData.data);
-      } catch (err) {
-        console.error("Error fetching airing:", err);
-        hadError = true;
-      }
+      // Helper to fetch one list
+      const fetchList = async (url, setter) => {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("API response not ok");
+          const data = await response.json();
+          setter(data.data);
+          return true;
+        } catch (err) {
+          console.error(`Failed to fetch ${url}:`, err);
+          return false;
+        }
+      };
 
-      // --- 2. Fetch Top Upcoming ---
-      try {
-        const upcomingRes = await fetch(
-          `${KITSU_API_URL}/anime?filter[status]=upcoming&sort=-user_count&page[limit]=10`
-        );
-        if (!upcomingRes.ok) throw new Error("Upcoming list failed");
-        const upcomingData = await upcomingRes.json();
-        setTopUpcoming(upcomingData.data);
-      } catch (err) {
-        console.error("Error fetching upcoming:", err);
-        hadError = true;
-      }
+      // Fetch all lists individually
+      const results = await Promise.all([
+        fetchList(
+          `${KITSU_API_URL}/anime?filter[status]=current&sort=-user_count&page[limit]=10`,
+          setTopAiring
+        ),
+        fetchList(
+          `${KITSU_API_URL}/anime?filter[status]=upcoming&sort=-user_count&page[limit]=10`,
+          setTopUpcoming
+        ),
+        fetchList(
+          `${KITSU_API_URL}/anime?sort=-user_count&page[limit]=10`,
+          setMostPopular
+        ),
+      ]);
 
-      // --- 3. Fetch Top Popular ---
-      try {
-        const popularRes = await fetch(
-          `${KITSU_API_URL}/anime?sort=-user_count&page[limit]=10`
-        );
-        if (!popularRes.ok) throw new Error("Popular list failed");
-        const popularData = await popularRes.json();
-        setTopPopular(popularData.data);
-      } catch (err) {
-        console.error("Error fetching popular:", err);
-        hadError = true;
-      }
-
-      if (hadError) {
+      // If any of the results failed
+      if (results.some((res) => res === false)) {
         setError("Could not load all discover lists. Please try again later.");
       }
       setLoading(false);
@@ -898,47 +878,44 @@ function DiscoverPage({ db, userId }) {
     setSelectedAnime(null);
   };
 
-  // --- Reusable Carousel Component ---
-  const AnimeCarousel = ({ title, list, isLoading }) => (
-    <div className="space-y-3">
-      <h3 className="text-xl font-semibold text-white">{title}</h3>
-      <div className="flex space-x-4 overflow-x-auto py-2">
-        {isLoading ? (
-          <p className="text-gray-400">Loading list...</p>
-        ) : list.length === 0 ? (
-          <p className="text-gray-500">Could not load this list.</p>
-        ) : (
-          list.map((anime) => (
-            <div key={anime.id} className="w-40 flex-shrink-0">
-              <AnimeCard
-                anime={anime.attributes}
-                onCardClick={() => setSelectedAnime(anime)}
-              />
-            </div>
-          ))
-        )}
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center">
+        <p className="text-gray-400">Loading discover lists...</p>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="flex flex-col space-y-6">
+    <div className="flex flex-col space-y-8">
       <h2 className="text-2xl font-semibold">Discover Anime</h2>
-      {error && <p className="text-red-400 text-center text-sm">{error}</p>}
+      {error && <p className="text-red-400">{error}</p>}
+      {modalLoading && (
+        <p className="text-gray-400">Loading anime details...</p>
+      )}
 
-      <AnimeCarousel title="Top Airing" list={topAiring} isLoading={loading} />
+      {/* Top Airing Carousel */}
+      <AnimeCarousel
+        title="Top Airing"
+        animeList={topAiring}
+        onAnimeClick={setSelectedAnime}
+      />
+
+      {/* Most Popular Carousel */}
       <AnimeCarousel
         title="Most Popular All Time"
-        list={topPopular}
-        isLoading={loading}
-      />
-      <AnimeCarousel
-        title="Top Upcoming"
-        list={topUpcoming}
-        isLoading={loading}
+        animeList={mostPopular}
+        onAnimeClick={setSelectedAnime}
       />
 
-      {/* --- Render modal --- */}
+      {/* Top Upcoming Carousel */}
+      <AnimeCarousel
+        title="Top Upcoming"
+        animeList={topUpcoming}
+        onAnimeClick={setSelectedAnime}
+      />
+
+      {/* Render modal from Discover Page */}
       {selectedAnime && (
         <AnimeDetailsModal
           anime={selectedAnime}
@@ -951,13 +928,34 @@ function DiscoverPage({ db, userId }) {
   );
 }
 
+// --- NEW: Reusable Carousel Component ---
+function AnimeCarousel({ title, animeList, onAnimeClick }) {
+  if (!animeList || animeList.length === 0) return null;
+
+  return (
+    <section>
+      <h3 className="text-xl font-semibold mb-3">{title}</h3>
+      <div className="flex overflow-x-auto gap-4 pb-4 -mb-4">
+        {animeList.map((anime) => (
+          <div key={anime.id} className="w-40 flex-shrink-0">
+            <AnimeCard
+              anime={anime.attributes}
+              onCardClick={() => onAnimeClick(anime)}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // --- Profile Page Component ---
 function ProfilePage({ db, userId, currentUser, username, setUsername }) {
   const [newUsername, setNewUsername] = useState(username);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // --- Import State ---
+  // Import State
   const [importFile, setImportFile] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importMessage, setImportMessage] = useState("");
@@ -1010,7 +1008,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
     setLoading(false);
   };
 
-  // --- MAL Status Mapper ---
+  // MAL Status Mapper
   const mapMalStatus = (malStatus) => {
     // MAL Statuses from XML: "Watching", "Completed", "On-Hold", "Dropped", "Plan to Watch"
     switch (malStatus) {
@@ -1029,7 +1027,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
     }
   };
 
-  // --- MAL Import Handler ---
+  // MAL Import Handler
   const handleMalImport = async () => {
     if (!importFile) {
       setImportMessage("Please select your MAL export file first.");
@@ -1063,7 +1061,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
         // This is the fix: read my_status *text* content
         const malStatus = node.getElementsByTagName("my_status")[0].textContent;
 
-        // --- Import score and progress ---
+        // Import score and progress
         const malScore = parseInt(
           node.getElementsByTagName("my_score")[0].textContent,
           10
@@ -1109,7 +1107,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
             title: attr.canonicalTitle,
             imageUrl: attr.posterImage?.small || null,
             status: appStatus,
-            // --- Add score and progress ---
+            // Add score and progress
             score: malScore > 0 ? malScore : 0, // 0 for 'No Score'
             watchedEpisodes: malWatchedEpisodes || 0,
             totalEpisodes: attr.episodeCount || 0, // Store total for progress bar
@@ -1166,7 +1164,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
         </p>
         <p className="text-gray-400">
           <span className="font-medium text-gray-300">User ID:</span>
-          <span className="text-xs break-all ml-2 p-1 bg-gray-800 rounded font-mono">
+          <span className="text-xs break-all ml-2 p-1 bg-gray-800/70 rounded font-mono">
             {userId}
           </span>
         </p>
@@ -1185,7 +1183,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
             type="text"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-700/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           <p className="text-xs text-gray-400 mt-1">
             This is the name your friends will see and use to find you.
@@ -1205,7 +1203,7 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
         <button
           type="submit"
           disabled={loading || newUsername.trim() === username}
-          className="w-full px-4 py-3 font-semibold text-black bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+          className="w-full px-4 py-3 font-semibold text-gray-900 bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"
         >
           {loading ? "Updating..." : "Update Username"}
         </button>
@@ -1229,13 +1227,13 @@ function ProfilePage({ db, userId, currentUser, username, setUsername }) {
               file:mr-4 file:py-2 file:px-4
               file:rounded-full file:border-0
               file:text-sm file:font-semibold
-              file:bg-gray-700 file:text-white
+              file:bg-gray-700 file:text-gray-200
               hover:file:bg-gray-600"
           />
           <button
             onClick={handleMalImport}
             disabled={importLoading || !importFile}
-            className="w-full px-4 py-3 font-semibold text-black bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"
           >
             {importLoading ? "Importing..." : "Start Import"}
           </button>
@@ -1264,7 +1262,7 @@ function SearchPage({ db, userId }) {
   const [error, setError] = useState("");
   const [selectedAnime, setSelectedAnime] = useState(null);
 
-  // --- Debounced Search Effect ---
+  // Debounced Search Effect
   useEffect(() => {
     // Set up a timer
     const timer = setTimeout(() => {
@@ -1371,14 +1369,8 @@ function FriendsPage({ db, userId, username }) {
   const [error, setError] = useState("");
   const [searchError, setSearchError] = useState("");
 
-  const [viewingFriend, setViewingFriend] = useState(null);
-  const [friendList, setFriendList] = useState([]);
-  const [loadingFriendList, setLoadingFriendList] = useState(false);
-
-  // --- State for modal on home page ---
-  const [selectedAnimeKitsuId, setSelectedAnimeKitsuId] = useState(null);
-  const [selectedAnimeData, setSelectedAnimeData] = useState(null);
-  const [modalLoading, setModalLoading] = useState(false);
+  // --- NEW: State for the large friend modal ---
+  const [viewingFriend, setViewingFriend] = useState(null); // { uid, username }
 
   const userDocRef = doc(db, `artifacts/${appId}/public/data/users/${userId}`);
   const usersCollectionRef = collection(
@@ -1386,7 +1378,7 @@ function FriendsPage({ db, userId, username }) {
     `artifacts/${appId}/public/data/users`
   );
 
-  // --- Fetch My Friends List ---
+  // Fetch My Friends List
   useEffect(() => {
     setLoading(true);
     const unsubscribe = onSnapshot(
@@ -1411,39 +1403,7 @@ function FriendsPage({ db, userId, username }) {
     return () => unsubscribe();
   }, [db, userId]); // Rerun if db or userId changes
 
-  // --- Fetch full anime details when a friend's anime card is clicked ---
-  useEffect(() => {
-    if (!selectedAnimeKitsuId) return;
-
-    const fetchAnimeDetails = async () => {
-      setModalLoading(true);
-      try {
-        const response = await fetch(
-          `${KITSU_API_URL}/anime/${selectedAnimeKitsuId}`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch anime details from Kitsu.");
-        }
-        const data = await response.json();
-        setSelectedAnimeData(data.data); // Kitsu API nests result in 'data'
-      } catch (err) {
-        console.error("Error fetching Kitsu details:", err);
-        // Can't open modal if fetch fails
-        setSelectedAnimeKitsuId(null);
-        setSelectedAnimeData(null);
-      }
-      setModalLoading(false);
-    };
-
-    fetchAnimeDetails();
-  }, [selectedAnimeKitsuId]);
-
-  const handleCloseModal = () => {
-    setSelectedAnimeKitsuId(null);
-    setSelectedAnimeData(null);
-  };
-
-  // --- Search for Friends ---
+  // Search for Friends
   const handleFriendSearch = async (e) => {
     e.preventDefault();
     if (friendSearch.trim().length < 3) {
@@ -1462,8 +1422,7 @@ function FriendsPage({ db, userId, username }) {
     setSearchResults([]);
 
     try {
-      // Query for username. Note: Firestore search is case-sensitive.
-      // For a real app, you'd use a lowercase field or a 3rd party search service.
+      // Query for username.
       const q = query(
         usersCollectionRef,
         where("username", "==", friendSearch.trim()),
@@ -1492,7 +1451,7 @@ function FriendsPage({ db, userId, username }) {
     setSearchLoading(false);
   };
 
-  // --- Add a Friend ---
+  // Add a Friend
   const addFriend = async (friendUser) => {
     const newFriend = {
       uid: friendUser.uid,
@@ -1515,89 +1474,6 @@ function FriendsPage({ db, userId, username }) {
     }
   };
 
-  // --- View Friend's List ---
-  const viewFriendList = (friend) => {
-    setViewingFriend(friend);
-    setLoadingFriendList(true);
-    setFriendList([]);
-
-    // Path to the friend's "animeList" sub-collection
-    const friendListPath = `artifacts/${appId}/public/data/users/${friend.uid}/animeList`;
-    const listCollectionRef = collection(db, friendListPath);
-
-    // Using getDocs for a one-time fetch, as we don't need real-time updates
-    getDocs(listCollectionRef)
-      .then((snapshot) => {
-        const list = snapshot.docs.map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-        }));
-        setFriendList(list);
-        setLoadingFriendList(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching friend's list:", err);
-        setLoadingFriendList(false);
-      });
-  };
-
-  // --- Render Friend's List Modal ---
-  if (viewingFriend) {
-    return (
-      <div className="fixed inset-0 z-20 bg-black bg-opacity-75 flex items-center justify-center p-4 fade-in">
-        <div className="relative w-full max-w-3xl max-h-[80vh] bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-xl p-6 slide-up">
-          <button
-            onClick={() => setViewingFriend(null)}
-            className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white"
-          >
-            <CloseIcon />
-          </button>
-          <h3 className="text-xl font-semibold mb-4">
-            {viewingFriend.username}'s List
-          </h3>
-
-          {loadingFriendList ? (
-            <p>Loading {viewingFriend.username}'s list...</p>
-          ) : (
-            <div className="overflow-y-auto max-h-[65vh]">
-              {friendList.length === 0 ? (
-                <p>{viewingFriend.username} hasn't added any anime yet.</p>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {friendList.map((anime) => (
-                    // --- Pass 'isFriendList' to hide score/progress on friend's card ---
-                    <AnimeCard
-                      key={anime.id}
-                      anime={anime}
-                      isFriendList={true}
-                      // --- Allow clicking on friend's anime ---
-                      onCardClick={() => setSelectedAnimeKitsuId(anime.kitsuId)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* --- Modal for viewing friend's anime details --- */}
-          {modalLoading && (
-            <div className="absolute inset-0 bg-gray-900/70 backdrop-blur-md flex items-center justify-center">
-              <p className="text-white">Loading anime details...</p>
-            </div>
-          )}
-          {selectedAnimeData && (
-            <AnimeDetailsModal
-              anime={selectedAnimeData}
-              onClose={handleCloseModal}
-              db={db}
-              userId={userId} // Pass *your* userId so you can add it to *your* list
-            />
-          )}
-        </div>
-      </div>
-    );
-  }
-
   // --- Render Main Friends Page ---
   return (
     <div className="flex flex-col space-y-6">
@@ -1615,7 +1491,7 @@ function FriendsPage({ db, userId, username }) {
           <button
             type="submit"
             disabled={searchLoading}
-            className="flex-shrink-0 px-4 py-3 font-semibold text-black bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-600"
+            className="flex-shrink-0 px-5 py-3 font-semibold text-gray-900 bg-gray-200 rounded-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:bg-gray-500"
           >
             <SearchIcon />
           </button>
@@ -1657,8 +1533,8 @@ function FriendsPage({ db, userId, username }) {
                     {friend.username}
                   </span>
                   <button
-                    onClick={() => viewFriendList(friend)}
-                    className="px-3 py-1 text-sm font-medium text-black bg-gray-200 rounded-md hover:bg-white transition-colors"
+                    onClick={() => setViewingFriend(friend)}
+                    className="px-3 py-1 text-sm font-medium text-gray-900 bg-gray-200 rounded-md hover:bg-white transition-colors"
                   >
                     View List
                   </button>
@@ -1666,6 +1542,211 @@ function FriendsPage({ db, userId, username }) {
               ))
             )}
           </div>
+        )}
+      </div>
+
+      {/* --- NEW: Render Friend's List Modal --- */}
+      {viewingFriend && (
+        <FriendListModal
+          friend={viewingFriend}
+          onClose={() => setViewingFriend(null)}
+          db={db}
+          userId={userId} // Pass *your* userId to allow adding to your list
+        />
+      )}
+    </div>
+  );
+}
+
+// --- NEW: Friend List Modal Component ---
+function FriendListModal({ friend, onClose, db, userId }) {
+  const [friendList, setFriendList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("watching");
+  const [stats, setStats] = useState({
+    watching: 0,
+    completed: 0,
+    planned: 0,
+    dropped: 0,
+  });
+
+  // State for modal-in-modal
+  const [selectedAnimeKitsuId, setSelectedAnimeKitsuId] = useState(null);
+  const [selectedAnimeData, setSelectedAnimeData] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
+
+  const statusTabs = ["watching", "completed", "planned", "dropped"];
+
+  // Fetch friend's list once
+  useEffect(() => {
+    setLoading(true);
+    const friendListPath = `artifacts/${appId}/public/data/users/${friend.uid}/animeList`;
+    const listCollectionRef = collection(db, friendListPath);
+
+    getDocs(listCollectionRef)
+      .then((snapshot) => {
+        let watching = 0,
+          completed = 0,
+          planned = 0,
+          dropped = 0;
+        const list = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          switch (data.status) {
+            case "watching":
+              watching++;
+              break;
+            case "completed":
+              completed++;
+              break;
+            case "planned":
+              planned++;
+              break;
+            case "dropped":
+              dropped++;
+              break;
+          }
+          return { ...data, id: doc.id };
+        });
+
+        setFriendList(list);
+        setStats({ watching, completed, planned, dropped });
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching friend's list:", err);
+        setLoading(false);
+      });
+  }, [db, friend.uid]);
+
+  // Fetch full anime details when a card is clicked
+  useEffect(() => {
+    if (!selectedAnimeKitsuId) return;
+
+    const fetchAnimeDetails = async () => {
+      setModalLoading(true);
+      try {
+        const response = await fetch(
+          `${KITSU_API_URL}/anime/${selectedAnimeKitsuId}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch anime details from Kitsu.");
+        }
+        const data = await response.json();
+        setSelectedAnimeData(data.data);
+      } catch (err) {
+        console.error("Error fetching Kitsu details:", err);
+        setSelectedAnimeKitsuId(null);
+        setSelectedAnimeData(null);
+      }
+      setModalLoading(false);
+    };
+
+    fetchAnimeDetails();
+  }, [selectedAnimeKitsuId]);
+
+  const filteredList = useMemo(
+    () => friendList.filter((item) => item.status === statusFilter),
+    [friendList, statusFilter]
+  );
+
+  const handleCloseModal = () => {
+    setSelectedAnimeKitsuId(null);
+    setSelectedAnimeData(null);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-20 bg-black bg-opacity-75 flex items-center justify-center p-4 fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-6xl max-h-[90vh] bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-xl p-6 flex flex-col slide-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white z-30"
+        >
+          <CloseIcon />
+        </button>
+
+        <h3 className="text-2xl font-semibold mb-2 text-white">
+          {friend.username}'s List
+        </h3>
+        {/* QOL Stats */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-400 mb-4">
+          <span>
+            <span className="font-medium text-gray-200">{stats.completed}</span>{" "}
+            Completed
+          </span>
+          <span>
+            <span className="font-medium text-gray-200">{stats.watching}</span>{" "}
+            Watching
+          </span>
+          <span>
+            <span className="font-medium text-gray-200">{stats.planned}</span>{" "}
+            Planned
+          </span>
+          <span>
+            <span className="font-medium text-gray-200">{stats.dropped}</span>{" "}
+            Dropped
+          </span>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {statusTabs.map((status) => (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className={`px-4 py-2 capitalize font-medium rounded-full text-sm transition-colors ${
+                statusFilter === status
+                  ? "bg-gray-200 text-gray-900"
+                  : "bg-gray-800/70 text-gray-300 hover:bg-gray-700/70 border border-gray-700/50"
+              }`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+
+        {/* Friend's List Grid */}
+        <div className="flex-grow overflow-y-auto">
+          {loading ? (
+            <p className="text-gray-400">Loading {friend.username}'s list...</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {filteredList.length === 0 ? (
+                <p className="text-gray-400 col-span-full mt-4">
+                  {friend.username} hasn't added any anime to their "
+                  {statusFilter}" list.
+                </p>
+              ) : (
+                filteredList.map((anime) => (
+                  <AnimeCard
+                    key={anime.id}
+                    anime={anime}
+                    onCardClick={() => setSelectedAnimeKitsuId(anime.kitsuId)}
+                  />
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Modal-in-modal for viewing details */}
+        {modalLoading && (
+          <div className="absolute inset-0 bg-gray-900/70 backdrop-blur-md flex items-center justify-center z-40">
+            <p className="text-white">Loading anime details...</p>
+          </div>
+        )}
+        {selectedAnimeData && (
+          <AnimeDetailsModal
+            anime={selectedAnimeData}
+            onClose={handleCloseModal}
+            db={db}
+            userId={userId} // Pass *your* userId so you can add to *your* list
+          />
         )}
       </div>
     </div>
@@ -1680,7 +1761,7 @@ function UserCard({ user, onAdd }) {
       <span className="font-medium text-white">{user.username}</span>
       <button
         onClick={() => onAdd(user)}
-        className="flex items-center justify-center p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600 transition-colors"
+        className="flex items-center justify-center p-2 bg-gray-700 text-gray-200 rounded-full hover:bg-gray-600 transition-colors"
         title={`Add ${user.username} as a friend`}
       >
         <PlusIcon />
@@ -1689,15 +1770,18 @@ function UserCard({ user, onAdd }) {
   );
 }
 
-// --- 3D Tilt Card Component ---
-function AnimeCard({ anime, onCardClick, isFriendList = false }) {
+// 3D Tilt Card Component
+function AnimeCard({ anime, onCardClick }) {
+  const cardRef = useRef(null);
+  const [style, setStyle] = useState({});
+
   // Check if anime data is from Kitsu (search) or Firestore (list)
   const isKitsu = !!anime.canonicalTitle;
 
   const title = isKitsu ? anime.canonicalTitle : anime.title;
   const imageUrl = isKitsu ? anime.posterImage?.small : anime.imageUrl;
 
-  // --- Get score and progress ---
+  // Get score and progress
   const score = anime.score || 0;
   const watched = anime.watchedEpisodes || 0;
   const total = anime.totalEpisodes || 0;
@@ -1712,95 +1796,98 @@ function AnimeCard({ anime, onCardClick, isFriendList = false }) {
   }
 
   // Fallback image
-  const placeholderImg = `https://placehold.co/500x700/1F2937/E5E7EB?text=${encodeURIComponent(
+  const placeholderImg = `https://placehold.co/500x700/2D3748/E2E8F0?text=${encodeURIComponent(
     title
   )}`;
 
-  // --- 3D Tilt & Light Effect ---
-  const cardRef = React.useRef(null);
-
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
-    const { left, top, width, height } =
-      cardRef.current.getBoundingClientRect();
-    const x = e.clientX - left;
-    const y = e.clientY - top;
 
-    // Calculate rotation
-    const rotateX = ((y - height / 2) / (height / 2)) * -5; // Max 5deg tilt
-    const rotateY = ((x - width / 2) / (width / 2)) * 5; // Max 5deg tilt
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    // Calculate light position
+    const { width, height } = rect;
+    const rotateX = (y / height - 0.5) * -15; // Max 7.5 deg tilt
+    const rotateY = (x / width - 0.5) * 15; // Max 7.5 deg tilt
+
     const lightX = (x / width) * 100;
     const lightY = (y / height) * 100;
 
-    cardRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-    cardRef.current.style.setProperty("--light-x", `${lightX}%`);
-    cardRef.current.style.setProperty("--light-y", `${lightY}%`);
+    setStyle({
+      transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`,
+      background: `radial-gradient(circle at ${lightX}% ${lightY}%, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0) 40%)`,
+    });
   };
 
   const handleMouseLeave = () => {
-    if (!cardRef.current) return;
-    cardRef.current.style.transform =
-      "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
+    setStyle({
+      transform: "perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)",
+      background: "transparent",
+    });
   };
 
   return (
     <div
       ref={cardRef}
-      className={`anime-card relative bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-lg overflow-hidden flex flex-col
-        ${onCardClick ? "cursor-pointer" : ""}`}
+      className={`relative bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-lg shadow-lg overflow-hidden flex flex-col ${
+        onCardClick ? "cursor-pointer" : ""
+      } transition-transform duration-100 ease-out`}
+      style={{ transform: style.transform }}
+      onClick={onCardClick}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      onClick={onCardClick}
     >
-      {/* --- Score Badge --- */}
-      {!isKitsu && !isFriendList && score > 0 && (
-        <div className="absolute top-2 right-2 z-10 bg-gray-200 text-black text-xs font-bold px-2 py-1 rounded-full shadow-md">
+      {/* Score Badge */}
+      {score > 0 && (
+        <div className="absolute top-2 right-2 z-10 bg-gray-200 text-gray-900 text-xs font-bold px-2 py-1 rounded-full shadow-md">
           {score}/10
         </div>
       )}
 
-      <img
-        src={imageUrl || placeholderImg}
-        alt={title}
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = placeholderImg;
-        }}
-        className="w-full h-48 sm:h-64 object-cover pointer-events-none"
-      />
-      <div className="p-3 flex-grow pointer-events-none">
-        <h3 className="font-semibold text-sm text-white truncate" title={title}>
-          {title}
-        </h3>
+      {/* Light Effect Overlay */}
+      <div
+        className="absolute inset-0 z-0 transition-all duration-100 ease-out"
+        style={{ background: style.background }}
+      ></div>
+
+      {/* Card Content */}
+      <div className="relative z-0">
+        <img
+          src={imageUrl || placeholderImg}
+          alt={title}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = placeholderImg;
+          }}
+          className="w-full aspect-[2/3] object-cover" // Enforce 2:3 ratio
+        />
+        <div className="p-3">
+          <h3
+            className="font-semibold text-sm text-white truncate"
+            title={title}
+          >
+            {title}
+          </h3>
+        </div>
       </div>
 
-      {/* --- Progress Bar --- */}
-      {!isKitsu && !isFriendList && progressPercent > 0 && (
-        <div className="w-full bg-gray-700/50 h-1 pointer-events-none">
+      {/* Progress Bar */}
+      {progressPercent > 0 && (
+        <div className="relative w-full bg-gray-700 h-1 z-0">
           <div
             className="bg-green-500 h-1"
             style={{ width: `${progressPercent}%` }}
           ></div>
         </div>
       )}
-
-      {/* --- Light Effect --- */}
-      <div
-        className="anime-card-light absolute inset-0"
-        style={{
-          "--light-x": "50%",
-          "--light-y": "50%",
-        }}
-      ></div>
     </div>
   );
 }
 
 function AnimeDetailsModal({ anime, onClose, db, userId }) {
   const [loading, setLoading] = useState(true);
-  // --- Store list item in state ---
+  // Store list item in state
   const [listItem, setListItem] = useState(null);
 
   // Kitsu API data is nested in 'attributes'
@@ -1809,10 +1896,10 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
   const title = attr.canonicalTitle;
   const imageUrl =
     attr.posterImage?.medium ||
-    `https://placehold.co/500x700/1F2937/E5E7EB?text=${encodeURIComponent(
+    `https://placehold.co/500x700/2D3748/E2E8F0?text=${encodeURIComponent(
       title
     )}`;
-  // --- Get total episodes from Kitsu ---
+  // Get total episodes from Kitsu
   const totalEpisodes = attr.episodeCount || 0; // 0 if unknown
 
   // Find anime ID in my list (Kitsu ID is a string, so we compare strings)
@@ -1825,7 +1912,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
     return doc(collection(db, listCollectionPath), animeKitsuId);
   }, [db, userId, animeKitsuId]);
 
-  // --- Use onSnapshot to get real-time data ---
+  // Use onSnapshot to get real-time data
   useEffect(() => {
     if (!animeDocRef) return;
 
@@ -1866,7 +1953,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
     }, [value, saveFunction]);
   };
 
-  // --- Local state for inputs ---
+  // Local state for inputs
   const [localScore, setLocalScore] = useState(listItem?.score || 0);
   const [localEpisodes, setLocalEpisodes] = useState(
     listItem?.watchedEpisodes || 0
@@ -1878,7 +1965,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
     setLocalEpisodes(listItem?.watchedEpisodes || 0);
   }, [listItem]);
 
-  // --- Save functions for debouncing ---
+  // Save functions for debouncing
   const saveScore = useCallback(
     (newScore) => {
       if (!animeDocRef || newScore === listItem?.score) return;
@@ -1908,7 +1995,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
   useDebouncedSaveAfterMount(localScore, saveScore);
   useDebouncedSaveAfterMount(localEpisodes, saveProgress);
 
-  // --- Add/Update/Remove from List ---
+  // Add/Update/Remove from List
   const addToList = async (status) => {
     const animeData = {
       kitsuId: animeKitsuId,
@@ -1941,15 +2028,9 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
 
   const statusOptions = ["watching", "completed", "planned", "dropped"];
 
-  // --- Helper function to format start date ---
-  const getYear = (dateString) => {
-    if (!dateString) return null;
-    return new Date(dateString).getFullYear();
-  };
-
   return (
     <div
-      className="fixed inset-0 z-20 bg-black bg-opacity-75 flex items-center justify-center p-4 fade-in"
+      className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4 fade-in"
       onClick={onClose}
     >
       <div
@@ -1963,43 +2044,44 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
           <CloseIcon />
         </button>
 
+        {/* Trailer Button */}
+        {attr.youtubeVideoId && (
+          <a
+            href={`https://www.youtube.com/watch?v=${attr.youtubeVideoId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute top-4 left-4 z-10 flex items-center px-3 py-2 bg-gray-900/70 backdrop-blur-md border border-gray-700/50 rounded-full text-white text-sm font-medium hover:bg-white hover:text-black transition-colors"
+          >
+            <PlayIcon />
+            Trailer
+          </a>
+        )}
+
         <img
           src={imageUrl}
           alt={title}
-          className="w-full h-48 md:h-64 object-cover object-top"
+          className="w-full h-64 object-cover object-top"
         />
 
         <div className="p-6 space-y-4">
           <h2 className="text-2xl font-bold text-white">{title}</h2>
 
-          {/* --- Info Tags --- */}
+          {/* Info Tags */}
           <div className="flex flex-wrap gap-2">
-            <span className="px-3 py-1 bg-gray-700/70 text-gray-200 text-xs font-medium rounded-full">
+            <span className="px-3 py-1 bg-gray-800/70 text-gray-300 text-xs font-medium rounded-full">
               {attr.status === "current"
                 ? "Airing"
                 : attr.status.charAt(0).toUpperCase() + attr.status.slice(1)}
             </span>
-            {getYear(attr.startDate) && (
-              <span className="px-3 py-1 bg-gray-700/70 text-gray-200 text-xs font-medium rounded-full">
-                {getYear(attr.startDate)}
+            {attr.startDate && (
+              <span className="px-3 py-1 bg-gray-800/70 text-gray-300 text-xs font-medium rounded-full">
+                {attr.startDate.split("-")[0]}
               </span>
             )}
             {attr.ageRating && (
-              <span className="px-3 py-1 bg-gray-700/70 text-gray-200 text-xs font-medium rounded-full">
+              <span className="px-3 py-1 bg-gray-800/70 text-gray-300 text-xs font-medium rounded-full">
                 {attr.ageRating}
               </span>
-            )}
-            {/* --- Trailer Button --- */}
-            {attr.youtubeVideoId && (
-              <a
-                href={`https://www.youtube.com/watch?v=${attr.youtubeVideoId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center px-3 py-1 bg-red-600/70 text-white text-xs font-medium rounded-full hover:bg-red-500/70"
-              >
-                <PlayIcon />
-                Watch Trailer
-              </a>
             )}
           </div>
 
@@ -2015,7 +2097,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
                 disabled={loading}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   listItem?.status === status
-                    ? "bg-gray-200 text-black"
+                    ? "bg-gray-200 text-gray-900"
                     : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                 } disabled:opacity-50`}
               >
@@ -2024,7 +2106,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
             ))}
           </div>
 
-          {/* --- Score and Progress Section --- */}
+          {/* Score and Progress Section */}
           {listItem && !loading && (
             <div className="pt-4 border-t border-gray-700/50 space-y-4">
               <div className="flex items-center justify-between">
@@ -2038,7 +2120,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
                   id="score"
                   value={localScore}
                   onChange={(e) => setLocalScore(parseInt(e.target.value, 10))}
-                  className="px-3 py-2 bg-gray-800/70 border border-gray-700 rounded-lg text-white"
+                  className="px-3 py-2 bg-gray-800/70 border border-gray-700/50 rounded-lg text-white"
                 >
                   <option value="0">N/A</option>
                   {[...Array(10)].map((_, i) => (
@@ -2072,7 +2154,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
                         }
                       }
                     }}
-                    className="w-20 px-3 py-2 bg-gray-800/70 border border-gray-700 rounded-lg text-white text-right"
+                    className="w-20 px-3 py-2 bg-gray-800/70 border border-gray-700/50 rounded-lg text-white text-right"
                     min="0"
                     max={totalEpisodes > 0 ? totalEpisodes : undefined}
                   />
@@ -2088,7 +2170,7 @@ function AnimeDetailsModal({ anime, onClose, db, userId }) {
             <button
               onClick={removeFromList}
               disabled={loading}
-              className="w-full px-4 py-2 font-semibold text-white bg-red-600/70 rounded-lg hover:bg-red-500/70 transition-colors disabled:opacity-50"
+              className="w-full px-4 py-2 font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
             >
               Remove from List
             </button>
